@@ -1,0 +1,61 @@
+[project]
+name = "k-tick-mcp"
+version = "0.1.0"
+description = "MCP server for TickTick — task and notes access via Model Context Protocol."
+readme = "README.md"
+authors = [
+    { name = "Ivann KAMDEM", email = "kapoivha@gmail.com" }
+]
+license = {text = "MIT"}
+keywords = ["ticktick", "mcp", "model-context-protocol", "tasks", "productivity"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Scheduling",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.26.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "typer>=0.12.0",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+ticktick-mcp = "k_tick_mcp:main"
+ticktick-admin = "k_tick_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/kpihx/k-tick-mcp"
+Repository = "https://github.com/kpihx/k-tick-mcp"
+Issues = "https://github.com/kpihx/k-tick-mcp/issues"
+Changelog = "https://github.com/kpihx/k-tick-mcp/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.2",
+    "respx>=0.22",          # httpx mock transport (non-intrusive)
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: pure logic, no I/O, no network, no secrets (fast)",
+    "integration: needs bw-env on PATH and real secrets in vault",
+    "live: hits the real TickTick API (slow, rate-limited)",
+]
+# Default: run unit + integration.  Use `pytest -m live` for live tests.
+addopts = "-v --tb=short -m 'not live'"
+timeout = 30
+
+[build-system]
+requires = ["uv_build>=0.10.3,<0.11.0"]
+build-backend = "uv_build"
+
+

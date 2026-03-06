@@ -1,0 +1,57 @@
+server:
+  name: K-Tick-MCP
+  version: 0.2.0
+  state_directory: ~/.mcps/ticktick
+
+# ── TickTick API endpoints & HTTP settings ────────────────────────────────────
+# If TickTick ever changes any URL, header, or parameter — update here only.
+api:
+  # V1 Official Open API (OAuth2 Bearer token)
+  v1_base_url: https://api.ticktick.com/open/v1
+  # V2 Unofficial Web API (session cookie) — unlocks tags, habits, focus, folders, etc.
+  v2_base_url: https://api.ticktick.com/api/v2
+  # Web frontend origin (for Origin/Referer headers to pass CORS checks)
+  web_origin: https://ticktick.com
+  timeout: 15
+
+  # V2 login sub-paths (appended to v2_base_url)
+  v2_signon_path: /user/signon
+  v2_mfa_verify_path: /user/sign/mfa/code/verify
+  # Query parameters sent with every signon request
+  signon_params:
+    wc: "true"
+    remember: "true"
+
+  # User-Agent string for all V2 API requests (browser impersonation)
+  user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0"
+
+  # V2 session cookie name (the TickTick web app stores the token under this key)
+  session_cookie_name: "t"
+
+  # V2 device fingerprint header (X-Device JSON payload)
+  device:
+    platform: web
+    os: "Linux x86_64"
+    browser: "Firefox 145.0"
+    version: 8006
+    id: "6790a0b0c1d2e3f4a5b6c7d8"
+
+# ── Environment variable names (single source of truth) ───────────────────────
+# All code references these names via config constants — never hard-coded strings.
+env_vars:
+  api_token: TICKTICK_API_TOKEN
+  session_token: TICKTICK_SESSION_TOKEN
+  username: TICKTICK_USERNAME
+  password: TICKTICK_PASSWORD
+
+# ── External secrets manager (bw-env) ─────────────────────────────────────────
+# Optional fallback. If bw-env is not installed, this section is ignored.
+# Encapsulated: we only call `bw-env restart` and read env vars from a login
+# shell — we never touch bw-env internal files.
+secrets:
+  # The bw-env CLI command name (must be on PATH).
+  bwenv_command: "bw-env"
+  # Login shell used to re-read env vars after a daemon sync.
+  shell: "zsh"
+  # Seconds to wait after 'bw-env restart' for the daemon to sync.
+  restart_wait: 7
