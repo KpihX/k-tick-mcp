@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary, INFO, RESET
 from datetime import date, timedelta
 
-from ticktick_mcp.server import (
+from tick_mcp.server import (
     list_habits, list_habit_sections, create_habit,
     update_habit, delete_habit, habit_checkin, get_habit_records,
 )

@@ -1,5 +1,5 @@
 """
-Unit tests for ticktick_mcp.models — Pydantic models, enums, helpers.
+Unit tests for tick_mcp.models — Pydantic models, enums, helpers.
 
 These are pure logic tests: no I/O, no network, no secrets.
 They validate model construction, serialization, and helper functions.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from ticktick_mcp.models import (
+from tick_mcp.models import (
     # Enums
     Priority, TaskStatus, ChecklistStatus, TaskKind, ProjectKind,
     HabitType, HabitStatus,

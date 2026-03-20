@@ -1,5 +1,5 @@
 """
-Tests for ticktick_mcp.server — MCP tool registration & catalog.
+Tests for tick_mcp.server — MCP tool registration & catalog.
 
 All tests here are @unit — they verify static structure, not API calls.
 """
@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import pytest
 
-from ticktick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, __all__, _err, _task_dict
-from ticktick_mcp.mcp_api.utilities import ticktick_guide
-from ticktick_mcp.models import TickTickAPIError, Task, Priority, TaskStatus
+from tick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, __all__, _err, _task_dict
+from tick_mcp.mcp_api.utilities import ticktick_guide
+from tick_mcp.models import TickTickAPIError, Task, Priority, TaskStatus
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -122,7 +122,7 @@ class TestHelpers:
         assert d["title"] == "Test"
 
     def test_task_dict_with_checklist(self):
-        from ticktick_mcp.models import ChecklistItem
+        from tick_mcp.models import ChecklistItem
         t = Task(
             title="Shopping",
             items=[
@@ -146,7 +146,7 @@ class TestHelpers:
 @pytest.mark.unit
 class TestMCPInstance:
     def test_mcp_has_name(self):
-        assert mcp.name == "TickTick-MCP" or mcp.name is not None
+        assert mcp.name == "Tick-MCP" or mcp.name is not None
 
     def test_mcp_has_tools(self):
         """The mcp object should have registered tools."""

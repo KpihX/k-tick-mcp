@@ -3,7 +3,7 @@ TickTick API client — V1 (Official) + V2 (Unofficial) dual-stack.
 
 This module remains the stable public facade used by the MCP server and tests.
 Implementation is split into transport and operation modules under
-`ticktick_mcp.client_api`.
+`tick_mcp.client_api`.
 """
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary, INFO, RESET
 from datetime import date, timedelta
 
-from ticktick_mcp.server import (
+from tick_mcp.server import (
     get_completed_tasks, get_deleted_tasks, get_focus_stats,
 )
 

@@ -1,7 +1,7 @@
-# ticktick-mcp
+# tick-mcp
 
-[![PyPI](https://img.shields.io/pypi/v/ticktick-mcp)](https://pypi.org/project/ticktick-mcp/)
-[![Python](https://img.shields.io/pypi/pyversions/ticktick-mcp)](https://pypi.org/project/ticktick-mcp/)
+[![PyPI](https://img.shields.io/pypi/v/tick-mcp)](https://pypi.org/project/tick-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/tick-mcp)](https://pypi.org/project/tick-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **MCP server for TickTick** — manage tasks, projects, habits, tags, focus stats, and more through the [Model Context Protocol](https://modelcontextprotocol.io/).
@@ -62,7 +62,7 @@
 ## Package Layout
 
 ```text
-src/ticktick_mcp/
+src/tick_mcp/
 ├── mcp_api/
 │   ├── core.py          # shared FastMCP instance, catalog, helpers
 │   ├── utilities.py     # discovery + helper tools
@@ -95,18 +95,18 @@ src/ticktick_mcp/
 
 ```bash
 # recommended — installs as a standalone tool
-uv tool install ticktick-mcp
+uv tool install tick-mcp
 
 # or via pip
-pip install ticktick-mcp
+pip install tick-mcp
 ```
 
 This provides two commands:
 
 | Command | Description |
 |---|---|
-| `ticktick-mcp` | Start the MCP server (stdio transport) |
-| `ticktick-admin` | CLI helper — session refresh, diagnostics |
+| `tick-mcp` | Start the MCP server (stdio transport) |
+| `tick-admin` | CLI helper — session refresh, diagnostics |
 
 ## Configuration
 
@@ -115,7 +115,7 @@ This provides two commands:
 Copy the example file and fill in your tokens:
 
 ```bash
-cp src/ticktick_mcp/.env.example src/ticktick_mcp/.env
+cp src/tick_mcp/.env.example src/tick_mcp/.env
 ```
 
 | Variable | Required | Description |
@@ -136,12 +136,12 @@ cp src/ticktick_mcp/.env.example src/ticktick_mcp/.env
 Or use the CLI to auto-login:
 
 ```bash
-ticktick-admin session refresh
+tick-admin session refresh
 ```
 
 ### 2. Server config
 
-Runtime settings live in `src/ticktick_mcp/config.yaml` — API endpoints, timeouts, and user-agent are all externalised there.
+Runtime settings live in `src/tick_mcp/config.yaml` — API endpoints, timeouts, and user-agent are all externalised there.
 
 ## MCP Client Integration
 
@@ -153,7 +153,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "ticktick": {
-      "command": "ticktick-mcp",
+      "command": "tick-mcp",
       "env": {
         "TICKTICK_API_TOKEN": "your-v1-token",
         "TICKTICK_SESSION_TOKEN": "your-v2-token"
@@ -171,7 +171,7 @@ Add to `.vscode/mcp.json`:
 {
   "servers": {
     "ticktick": {
-      "command": "ticktick-mcp",
+      "command": "tick-mcp",
       "env": {
         "TICKTICK_API_TOKEN": "your-v1-token",
         "TICKTICK_SESSION_TOKEN": "your-v2-token"
@@ -183,14 +183,14 @@ Add to `.vscode/mcp.json`:
 
 ### Other MCP clients
 
-Any client that supports the stdio transport can launch `ticktick-mcp` as a subprocess.
+Any client that supports the stdio transport can launch `tick-mcp` as a subprocess.
 
 ## Development
 
 ```bash
 # Clone & install dev deps
-git clone https://github.com/kpihx/ticktick-mcp.git
-cd ticktick-mcp
+git clone https://github.com/kpihx/tick-mcp.git
+cd tick-mcp
 uv sync --group dev
 
 # Unit tests (155 selected unit tests, no network)

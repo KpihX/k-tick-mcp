@@ -4,7 +4,7 @@
 
 set -euo pipefail
 STOP=${1:-""}
-PYTHON="/home/kpihx/.local/share/uv/tools/ticktick-mcp/bin/python3"
+PYTHON="/home/kpihx/.local/share/uv/tools/tick-mcp/bin/python3"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 pass=0; fail=0

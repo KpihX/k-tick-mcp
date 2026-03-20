@@ -1,5 +1,5 @@
 """
-daemon.py — PID file manager for ticktick-mcp server lifecycle.
+daemon.py — PID file manager for tick-mcp server lifecycle.
 Mirrors the daemon management pattern from bw-mcp.
 """
 import os
@@ -14,7 +14,7 @@ def _pid_file_path() -> Path:
         config.get("server", {}).get("state_directory", "~/.mcps/ticktick")
     ).expanduser()
     state_dir.mkdir(parents=True, exist_ok=True)
-    return state_dir / "ticktick-mcp.pid"
+    return state_dir / "tick-mcp.pid"
 
 
 def write_pid(pid: int) -> None:

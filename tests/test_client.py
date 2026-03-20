@@ -1,5 +1,5 @@
 """
-Tests for ticktick_mcp.client — dual V1/V2 HTTP stack.
+Tests for tick_mcp.client — dual V1/V2 HTTP stack.
 
 Markers:
   @unit — mocked HTTP via respx, no real network.
@@ -11,8 +11,8 @@ import pytest
 import httpx
 import respx
 
-import ticktick_mcp.client as client_mod
-from ticktick_mcp.client import (
+import tick_mcp.client as client_mod
+from tick_mcp.client import (
     _handle,
     _v1_headers,
     _v2_headers,
@@ -37,10 +37,10 @@ from ticktick_mcp.client import (
     get_habits,
     get_user_status,
 )
-from ticktick_mcp.models import (
+from tick_mcp.models import (
     TickTickAPIError, Task, Project, SyncResponse, Tag, Habit, UserStatus,
 )
-from ticktick_mcp.config import SessionTokenExpiredError, V2_SIGNON_URL
+from tick_mcp.config import SessionTokenExpiredError, V2_SIGNON_URL
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

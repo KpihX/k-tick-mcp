@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary, INFO, RESET
 
-from ticktick_mcp.server import (
+from tick_mcp.server import (
     create_task, update_task, delete_task, get_task_detail,
     batch_create_tasks, batch_update_tasks, batch_delete_tasks,
     create_project, delete_project, get_project_tasks,

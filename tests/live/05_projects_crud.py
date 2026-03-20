@@ -9,7 +9,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary, INFO, RESET
 
-from ticktick_mcp.server import (
+from tick_mcp.server import (
     create_project, update_project, delete_project,
     list_project_folders, manage_project_folders,
     list_columns, manage_columns, list_projects,

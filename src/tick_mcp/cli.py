@@ -1,16 +1,16 @@
 """
-ticktick-admin — Admin CLI for the TickTick MCP server.
+tick-admin — Admin CLI for the TickTick MCP server.
 
-Manage credentials stored in .env (src/ticktick_mcp/.env) without going through
+Manage credentials stored in .env (src/tick_mcp/.env) without going through
 the LLM. All writes go through python-dotenv's set_key(), which safely creates
 or updates a single line without touching the rest of the file.
 
 Usage examples:
-    ticktick-admin status
-    ticktick-admin token set eyJhbGciOiJIUzI1NiJ9...
-    ticktick-admin session set <cookie-value-from-browser>
-    ticktick-admin session refresh          # interactive: prompts username + password
-    ticktick-admin session refresh --username me@email.com
+    tick-admin status
+    tick-admin token set eyJhbGciOiJIUzI1NiJ9...
+    tick-admin session set <cookie-value-from-browser>
+    tick-admin session refresh          # interactive: prompts username + password
+    tick-admin session refresh --username me@email.com
 """
 
 import sys
@@ -88,7 +88,7 @@ def _log_response(label: str, r: httpx.Response):
 
 # ─── Typer + Rich setup ───────────────────────────────────────────────────────
 app = typer.Typer(
-    name="ticktick-admin",
+    name="tick-admin",
     help="Admin CLI — manage TickTick MCP credentials (API token, V2 session token).",
     no_args_is_help=True,
     rich_markup_mode="rich",
@@ -278,7 +278,7 @@ def _handle_link_flow(username: str, password: str, auth_id: str, signon_data: d
         err.print("  • You need to click the link, not just open the email")
         err.print()
         err.print("  [dim]Alternative: extract the session cookie from your browser after logging in:[/dim]")
-        err.print("  [dim]  ticktick-admin session set[/dim]")
+        err.print("  [dim]  tick-admin session set[/dim]")
         raise typer.Exit(1)
 
     _log.error("signon_after_link: unexpected response: %s", data2)

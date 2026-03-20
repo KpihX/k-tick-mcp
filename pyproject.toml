@@ -1,5 +1,5 @@
 [project]
-name = "ticktick-mcp"
+name = "tick-mcp"
 version = "0.1.0"
 description = "MCP server for TickTick — task and notes access via Model Context Protocol."
 readme = "README.md"
@@ -27,14 +27,14 @@ dependencies = [
 ]
 
 [project.scripts]
-ticktick-mcp = "ticktick_mcp:main"
-ticktick-admin = "ticktick_mcp.cli:main"
+tick-mcp = "tick_mcp:main"
+tick-admin = "tick_mcp.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/kpihx/ticktick-mcp"
-Repository = "https://github.com/kpihx/ticktick-mcp"
-Issues = "https://github.com/kpihx/ticktick-mcp/issues"
-Changelog = "https://github.com/kpihx/ticktick-mcp/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/kpihx/tick-mcp"
+Repository = "https://github.com/kpihx/tick-mcp"
+Issues = "https://github.com/kpihx/tick-mcp/issues"
+Changelog = "https://github.com/kpihx/tick-mcp/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [

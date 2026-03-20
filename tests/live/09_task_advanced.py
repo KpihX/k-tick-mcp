@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary
 
-from ticktick_mcp.server import (
+from tick_mcp.server import (
     create_task, update_task, complete_task, reopen_task, delete_task,
     get_task_detail, get_inbox, get_completed_tasks, get_deleted_tasks,
     build_recurrence_rule, build_reminder,
@@ -303,7 +303,7 @@ for pid, tid in _cleanup:
         pass
 
 # clean up edge tags we may have created
-from ticktick_mcp.server import delete_tag
+from tick_mcp.server import delete_tag
 for tag_name in ["edge-tag-alpha", "edge-tag-beta", "edge-tag-gamma", "temp-tag-1"]:
     try:
         delete_tag(tag_name=tag_name)

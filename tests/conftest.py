@@ -16,11 +16,11 @@ from unittest.mock import patch
 
 import pytest
 
-from ticktick_mcp.config import ENV_API_TOKEN, ENV_SESSION_TOKEN, ENV_USERNAME, ENV_PASSWORD
+from tick_mcp.config import ENV_API_TOKEN, ENV_SESSION_TOKEN, ENV_USERNAME, ENV_PASSWORD
 
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-PACKAGE_DIR = Path(__file__).resolve().parent.parent / "src" / "ticktick_mcp"
+PACKAGE_DIR = Path(__file__).resolve().parent.parent / "src" / "tick_mcp"
 DOTENV_PATH = PACKAGE_DIR / ".env"
 
 
@@ -90,7 +90,7 @@ def require_bwenv():
 @pytest.fixture()
 def require_api_token():
     """Skip if API token is not available from any source."""
-    from ticktick_mcp.config import _shell_read_env
+    from tick_mcp.config import _shell_read_env
     val = os.environ.get(ENV_API_TOKEN) or _shell_read_env(ENV_API_TOKEN)
     if not val:
         pytest.skip(f"{ENV_API_TOKEN} not available — skipping")
@@ -100,7 +100,7 @@ def require_api_token():
 @pytest.fixture()
 def require_session_token():
     """Skip if session token is not available from any source."""
-    from ticktick_mcp.config import _shell_read_env
+    from tick_mcp.config import _shell_read_env
     val = os.environ.get(ENV_SESSION_TOKEN) or _shell_read_env(ENV_SESSION_TOKEN)
     if not val:
         pytest.skip(f"{ENV_SESSION_TOKEN} not available — skipping")

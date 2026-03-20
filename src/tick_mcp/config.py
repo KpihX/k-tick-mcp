@@ -57,7 +57,7 @@ CONFIG_PATH = _PACKAGE_DIR / "config.yaml"
 _DOTENV_PATH = _PACKAGE_DIR / ".env"
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
-_log = logging.getLogger("ticktick_mcp.config")
+_log = logging.getLogger("tick_mcp.config")
 
 # ─── .env loading ─────────────────────────────────────────────────────────────
 # override=True: values from .env overwrite any already-set os.environ entries.
@@ -99,7 +99,7 @@ API_TIMEOUT: int = _api.get("timeout", 15)
 USER_AGENT: str = _api.get("user_agent", "Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0")
 SESSION_COOKIE_NAME: str = _api.get("session_cookie_name", "t")
 
-SERVER_NAME: str = _config.get("server", {}).get("name", "TickTick-MCP")
+SERVER_NAME: str = _config.get("server", {}).get("name", "Tick-MCP")
 STATE_DIRECTORY: Path = Path(
     _config.get("server", {}).get("state_directory", "~/.mcps/ticktick")
 ).expanduser()
@@ -185,7 +185,7 @@ class SessionTokenExpiredError(RuntimeError):
             "  1. Log into TickTick in your browser and copy the new session cookie.\n"
             "  2. Update the value in your Vaultwarden vault (global_env item).\n"
             "  3. Wait ≤5 min for bw-env daemon to sync, or run: bw-env sync\n"
-            "  4. Or set it directly: ticktick-admin session set <token>"
+            "  4. Or set it directly: tick-admin session set <token>"
         )
         super().__init__(msg)
 
@@ -374,7 +374,7 @@ def _resolve_env(
                 f"Daemon sync failed — check logs: {_BWENV_CMD} logs -n 30",
                 f"The variable '{key}' is not defined in your Vaultwarden vault's global_env item.",
                 "Network issue — Vaultwarden server unreachable during sync.",
-                f"Manual fix: ticktick-admin token set <value>  or add {key}=<value> to .env",
+                f"Manual fix: tick-admin token set <value>  or add {key}=<value> to .env",
             ],
         )
     return None

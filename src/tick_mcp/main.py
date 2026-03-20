@@ -8,9 +8,9 @@ from . import daemon
 
 console = Console(stderr=True)          # ALL CLI output → stderr (stdout = MCP stdio)
 app = typer.Typer(
-    name="ticktick-mcp",
+    name="tick-mcp",
     help="TickTick MCP Server — task and notes access via Model Context Protocol.",
-    invoke_without_command=True,         # bare `ticktick-mcp` → serve
+    invoke_without_command=True,         # bare `tick-mcp` → serve
 )
 
 
