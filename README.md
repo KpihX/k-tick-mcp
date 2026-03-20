@@ -6,7 +6,7 @@
 
 **MCP server for TickTick** — manage tasks, projects, habits, tags, focus stats, and more through the [Model Context Protocol](https://modelcontextprotocol.io/).
 
-**46 tools** exposed over MCP, covering both the official TickTick Open API (V1) and the unofficial web API (V2) for features not yet available publicly.
+**61 tools** exposed over MCP, covering both the official TickTick Open API (V1) and the unofficial web API (V2) for features not yet available publicly.
 
 ---
 
@@ -17,6 +17,9 @@
 | **Tasks** | `create_task` · `update_task` · `complete_task` · `reopen_task` · `delete_task` · `get_task_detail` · `get_project_tasks` · `get_inbox` · `get_all_tasks` |
 | **Batch** | `batch_create_tasks` · `batch_update_tasks` · `batch_delete_tasks` · `move_tasks` |
 | **Projects** | `create_project` · `update_project` · `delete_project` · `get_project_detail` · `list_projects` |
+| **Query / Search** | `workspace_map` · `query_projects` · `query_folders` · `query_tasks` · `query_notes` · `query_agenda` · `query_task_history` |
+| **Views** | `tasks_of_today` · `events_of_today` · `overdue_tasks` · `stale_tasks` |
+| **Verified Actions** | `create_subtask` · `verified_set_subtask_parent` · `verified_move_tasks` · `verified_assign_project_folder` |
 | **Tags** | `create_tag` · `update_tag` · `rename_tag` · `merge_tags` · `delete_tag` · `list_tags` |
 | **Habits** | `create_habit` · `update_habit` · `delete_habit` · `list_habits` · `habit_checkin` · `get_habit_records` · `list_habit_sections` |
 | **Kanban** | `list_columns` · `manage_columns` |
@@ -26,6 +29,20 @@
 | **Subtasks** | `set_subtask_parent` |
 | **Sync / Stats** | `full_sync` · `get_user_status` · `get_productivity_stats` |
 | **Utilities** | `ticktick_guide` · `check_v2_availability` · `build_recurrence_rule` · `build_reminder` |
+
+### Query / Search highlights
+
+- **Structured task filtering** — folders, projects, tags, parent/subtask shape, reminders, recurrence, checklist presence, and priorities.
+- **Time-aware agenda access** — query by date range, datetime range, and HH:MM time windows without forcing a full sync first.
+- **Grep-like matching** — substring search, `any` / `all` / `phrase` keyword modes, regex, and exclusion regex across chosen fields.
+- **Targeted note search** — notes are fetched only from NOTE projects in scope instead of materializing the whole workspace.
+- **Workspace navigation** — folder/project map with optional active task counts to inspect the account structure before acting.
+
+### Verified workflow helpers
+
+- **Subtask-safe creation** — `create_subtask` creates the child, links it, then verifies `parentId` and `childIds`.
+- **Move verification** — `verified_move_tasks` re-reads destination projects and confirms every moved task is actually there.
+- **Folder assignment verification** — `verified_assign_project_folder` verifies the persisted `groupId` through V2 sync, not through the misleading V1 response.
 
 ## Installation
 
@@ -129,7 +146,7 @@ git clone https://github.com/kpihx/k-tick-mcp.git
 cd k-tick-mcp
 uv sync --group dev
 
-# Unit tests (135 tests, no network)
+# Unit tests (146 tests, no network)
 uv run pytest
 
 # Live tests against real TickTick API (requires tokens in .env)
@@ -138,7 +155,7 @@ uv run pytest -m live
 
 ### Test suite
 
-- **135 unit tests** — pure logic, mocked HTTP, zero network
+- **146 unit tests** — pure logic, mocked HTTP, zero network
 - **12 live integration scripts** — 508 assertions against the real TickTick API
 
 ## License

@@ -12,154 +12,25 @@ All tools return plain dicts/lists (JSON-serializable).
 Errors never raise — they return {"error": True, "status_code": N, "message": "..."}.
 """
 from __future__ import annotations
-
 from typing import Optional, Any
 
-from mcp.server.fastmcp import FastMCP
-
-from .config import SERVER_NAME, has_v2_auth, ENV_SESSION_TOKEN, SESSION_COOKIE_NAME
-from . import client
-from .models import (
-    TickTickAPIError, TaskStatus, Priority,
-    build_reminder_trigger, build_rrule,
+from .server_core import (
+    mcp,
+    TOOL_CATALOG,
+    COMMON_WORKFLOWS,
+    _err,
+    _task_dict,
+    _model_list,
+    client,
+    TickTickAPIError,
+    Priority,
+    has_v2_auth,
+    ENV_SESSION_TOKEN,
+    SESSION_COOKIE_NAME,
+    build_reminder_trigger,
+    build_rrule,
 )
 
-mcp = FastMCP(SERVER_NAME)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Tool Catalog (used by ticktick_guide)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-TOOL_CATALOG = {
-    "📋 Projects (V1)": {
-        "tools": ["list_projects", "get_project_detail", "create_project", "update_project", "delete_project"],
-        "desc": "CRUD operations on TickTick projects/lists.",
-    },
-    "✅ Tasks — Read (V1)": {
-        "tools": ["get_inbox", "get_project_tasks", "get_task_detail"],
-        "desc": "Fetch tasks from inbox or specific projects.",
-    },
-    "✏️ Tasks — Write (V1)": {
-        "tools": ["create_task", "update_task", "complete_task", "reopen_task", "delete_task"],
-        "desc": "Create, modify, complete, reopen or delete tasks.",
-    },
-    "⚡ Tasks — Batch (V2)": {
-        "tools": ["batch_create_tasks", "batch_update_tasks", "batch_delete_tasks", "move_tasks", "set_subtask_parent"],
-        "desc": "Bulk task operations: create/update/delete many at once, move between projects, set parent-child.",
-    },
-    "🔄 Sync (V2)": {
-        "tools": ["get_all_tasks", "full_sync"],
-        "desc": "Full account sync — all tasks, projects, tags, folders in one call.",
-    },
-    "📦 Completed & Trash (V2)": {
-        "tools": ["get_completed_tasks", "get_deleted_tasks"],
-        "desc": "Access completed/abandoned tasks and trash.",
-    },
-    "📁 Folders (V2)": {
-        "tools": ["list_project_folders", "manage_project_folders"],
-        "desc": "Organize projects into folders/groups.",
-    },
-    "📊 Kanban Columns (V2)": {
-        "tools": ["list_columns", "manage_columns"],
-        "desc": "Manage kanban board columns within a project.",
-    },
-    "🏷️ Tags (V2)": {
-        "tools": ["list_tags", "create_tag", "update_tag", "rename_tag", "merge_tags", "delete_tag"],
-        "desc": "Full tag management: create, update, rename, merge, delete.",
-    },
-    "🔁 Habits (V2)": {
-        "tools": ["list_habits", "list_habit_sections", "create_habit", "update_habit", "delete_habit", "habit_checkin", "get_habit_records"],
-        "desc": "Habit tracking: create habits, check in, view streaks & records.",
-    },
-    "🍅 Focus / Pomodoro (V2)": {
-        "tools": ["get_focus_stats"],
-        "desc": "Focus session statistics: heatmap and per-tag distribution.",
-    },
-    "👤 User & Stats (V2)": {
-        "tools": ["get_user_status", "get_productivity_stats"],
-        "desc": "Account info, subscription status, productivity scores & streaks.",
-    },
-    "🛠️ Utilities": {
-        "tools": ["ticktick_guide", "check_v2_availability", "build_recurrence_rule", "build_reminder"],
-        "desc": "Helpers: tool catalog, V2 check, RRULE builder, reminder builder.",
-    },
-}
-
-COMMON_WORKFLOWS = [
-    {
-        "name": "Create task with subtasks",
-        "steps": [
-            "1. create_task(title='Parent task', project_id='...')",
-            "2. create_task(title='Subtask 1', project_id='...')",
-            "3. set_subtask_parent(task_id=<subtask_id>, project_id='...', parent_id=<parent_id>)",
-        ],
-    },
-    {
-        "name": "Create recurring task with reminder",
-        "steps": [
-            "1. build_recurrence_rule(frequency='WEEKLY', by_day=['MO','WE','FR']) → get rrule",
-            "2. create_task(title='...', recurrence=<rrule>, reminder_minutes=[30], due_date='...', time_zone='Europe/Paris')",
-        ],
-    },
-    {
-        "name": "Move tasks to a new project",
-        "steps": [
-            "1. create_project(name='New Project') → get project id",
-            "2. move_tasks([{'taskId': '...', 'fromProjectId': '...', 'toProjectId': '<new_id>'}])",
-        ],
-    },
-    {
-        "name": "Organize with Eisenhower matrix",
-        "steps": [
-            "1. create_project(name='Eisenhower', view_mode='kanban')",
-            "2. manage_columns(project_id='...', add=[{'name':'Urgent+Important'},{'name':'Important'},{'name':'Urgent'},{'name':'Neither'}])",
-            "3. create_task(title='...', project_id='...', column_id='<column_id>', priority=5)",
-        ],
-    },
-    {
-        "name": "Track a measurable habit",
-        "steps": [
-            "1. create_habit(name='Drink water', habit_type='Real', goal=2.0, step=0.25, unit='L')",
-            "2. habit_checkin(habit_id='...', checkin_stamp=20260306, value=0.5)",
-            "3. get_habit_records(habit_ids=['...']) → view history",
-        ],
-    },
-    {
-        "name": "Full account overview",
-        "steps": [
-            "1. full_sync() → all projects, tasks, tags, folders in one call",
-            "   OR list_projects() + get_all_tasks() for just projects & tasks",
-        ],
-    },
-]
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Helpers
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _err(e) -> dict:
-    if isinstance(e, TickTickAPIError):
-        return e.to_dict()
-    return {"error": True, "message": str(e), "type": type(e).__name__}
-
-
-def _task_dict(task) -> dict:
-    """Serialize a Task model to a dict, adding human-readable labels."""
-    d = task.model_dump(exclude_none=False)
-    d["priority_label"] = task.priority_label()
-    d["is_completed"] = task.is_completed()
-    # Normalize allDay / isAllDay into a single reliable key
-    d["allDay"] = task.effective_all_day()
-    progress = task.checklist_progress()
-    if progress:
-        d["checklist_progress"] = progress
-    return d
-
-
-def _model_list(items) -> list[dict]:
-    return [i.model_dump(exclude_none=False) for i in (items or [])]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -187,6 +58,33 @@ def ticktick_guide(
         show_workflows: If True, return common multi-step workflow recipes.
 
     Tip: Call check_v2_availability() to see which features need a session token.
+
+    ── AGENT OPERATING CONTRACT ─────────────────────────────────────────────────
+    The TickTick API is dual-layer (V1 official + V2 unofficial) with silent failure
+    modes. Agents MUST apply the following discipline on every interaction:
+
+    1. VERIFY AFTER EVERY WRITE: After create/update/delete operations, always call
+       get_task_detail() (or equivalent read tool) to confirm the server state
+       matches the intent. Do not trust API response codes alone — silent partial
+       failures are common (reminders, parentId, groupId).
+
+    2. RETRY UNTIL CONFIRMED: If verification reveals a mismatch, diagnose the root
+       cause (V1/V2 API duality, missing anchor field, wrong format), adjust the
+       call strategy, and retry. Repeat verify → fix → retry until state is correct.
+
+    3. PROACTIVE USER FEEDBACK: After completing a multi-step task or recovering
+       from a silent failure, report to the user:
+         - What was attempted and what the API actually accepted.
+         - Any workaround applied (e.g., switched from V2 batch to V1 update_task).
+         - Recommendations for future similar operations.
+
+    4. KNOWN SILENT FAILURE PATTERNS (see individual tool docs for details):
+         - reminder_minutes on V2-created tasks → requires explicit due_date anchor
+           in update_task() V1; batch_update_tasks() V2 cannot anchor reminders.
+         - parentId at task creation → always silently ignored; use set_subtask_parent.
+         - groupId at project creation → use V2 batch/project to set folder after.
+         - reminder object format {trigger:} → silently rejected; use update_task V1.
+    ─────────────────────────────────────────────────────────────────────────────
     """
     if show_workflows:
         return {"workflows": COMMON_WORKFLOWS}
@@ -312,6 +210,9 @@ def list_projects() -> list[dict]:
 
     Returns: id, name, kind (TASK/NOTE), closed, color, sortOrder, groupId.
     Use the returned 'id' as project_id in task tools.
+
+    ⚠️  V1 limitation: groupId is ALWAYS null in V1 responses, even when a
+    folder assignment exists. Use full_sync() to see real groupId values.
     """
     try:
         return _model_list(client.get_projects())
@@ -349,7 +250,7 @@ def create_project(
     """
     Create a new TickTick project (list).
 
-    [Category: Projects]  [Auth: V1]
+    [Category: Projects]  [Auth: V1 + V2 when group_id is provided]
     [Related: list_projects, update_project, delete_project, list_project_folders]
     [Workflow: Create project → manage_columns (for kanban) → create_task]
 
@@ -359,16 +260,44 @@ def create_project(
         kind: "TASK" (default) or "NOTE".
         view_mode: "list", "kanban", or "timeline".
         group_id: Folder ID to file project in (from list_project_folders).
+
+    ⚠️  group_id ALWAYS requires a V2 follow-up — handled automatically here:
+        The V1 create endpoint silently ignores groupId in the payload (no error,
+        no warning — it just doesn't persist). This tool works around it by:
+        1. Creating the project via V1 to obtain the new project ID.
+        2. Immediately calling V2 POST /batch/project to assign the groupId.
+        The returned dict reflects groupId correctly. Verify with full_sync()
+        if needed — V1 list_projects always shows groupId=null regardless.
+
+    ⚠️  Never try to assign group_id via a raw V1 update — it silently fails.
+        Always go through update_project(group_id=...) which also uses V2.
     """
     try:
         payload: dict = {"name": name, "kind": kind}
-        if color:
-            payload["color"] = color
-        if view_mode:
-            payload["viewMode"] = view_mode
+        if color:     payload["color"] = color
+        if view_mode: payload["viewMode"] = view_mode
+        created = client.create_project(payload).model_dump(exclude_none=False)
+
         if group_id:
-            payload["groupId"] = group_id
-        return client.create_project(payload).model_dump(exclude_none=False)
+            # V1 silently ignores groupId — assign via V2 batch right after creation.
+            v2_item: dict = {k: v for k, v in created.items() if v is not None}
+            v2_item["id"] = created["id"]
+            v2_item["groupId"] = group_id
+            v2_item["name"] = name
+            v2_item["kind"] = kind
+            if view_mode: v2_item["viewMode"] = view_mode
+            result = client.batch_projects([v2_item])
+            errors = result.get("id2error", {}) if isinstance(result, dict) else {}
+            if errors:
+                return {
+                    "error": True,
+                    "status_code": 0,
+                    "message": f"Project created (id={created['id']}) but groupId assignment failed: {errors}",
+                    "project": created,
+                }
+            created["groupId"] = group_id  # reflect real state in response
+
+        return created
     except TickTickAPIError as e:
         return _err(e)
 
@@ -386,8 +315,8 @@ def update_project(
     """
     Update an existing project. Only provided fields are changed.
 
-    [Category: Projects]  [Auth: V1]
-    [Related: get_project_detail, create_project, delete_project]
+    [Category: Projects]  [Auth: V1 / V2 when group_id is provided]
+    [Related: get_project_detail, create_project, delete_project, list_project_folders]
 
     Args:
         project_id: The project to update.
@@ -395,8 +324,18 @@ def update_project(
         color: Hex color.
         kind: "TASK" or "NOTE".
         view_mode: "list", "kanban", or "timeline".
-        group_id: Move to a different folder.
+        group_id: Move to a different folder (from list_project_folders).
         closed: True=archive, False=unarchive.
+
+    ⚠️  group_id uses V2 internally (read-modify-write):
+        The V1 update endpoint silently ignores groupId. When group_id is
+        provided, this tool fetches the current project state first, then
+        applies all changes via V2 POST /batch/project so no other fields
+        (name, color, kind, …) are accidentally wiped.
+
+    ⚠️  V1 responses always return groupId=null:
+        After a successful folder assignment, V1 get_project_detail still
+        shows groupId=null. Use full_sync() to verify the real value via V2.
     """
     try:
         payload: dict = {}
@@ -404,10 +343,25 @@ def update_project(
         if color is not None:     payload["color"] = color
         if kind is not None:      payload["kind"] = kind
         if view_mode is not None: payload["viewMode"] = view_mode
-        if group_id is not None:  payload["groupId"] = group_id
         if closed is not None:    payload["closed"] = closed
-        if not payload:
+        if not payload and group_id is None:
             return {"error": True, "status_code": 0, "message": "No fields provided."}
+
+        if group_id is not None:
+            # V1 silently ignores groupId — use V2 batch/project with read-modify-write.
+            # Fetch current raw state so no existing fields (name, color, …) are wiped.
+            current_raw = client._v1_get(f"/project/{project_id}")
+            v2_item: dict = {k: v for k, v in current_raw.items() if v is not None}
+            v2_item["id"] = project_id
+            v2_item["groupId"] = group_id
+            v2_item.update(payload)           # apply caller-supplied overrides
+            result = client.batch_projects([v2_item])
+            errors = result.get("id2error", {})
+            if errors:
+                return {"error": True, "status_code": 0, "message": str(errors)}
+            # Re-fetch raw and return (V1 shape — groupId will show null, expected)
+            return client._v1_get(f"/project/{project_id}")
+
         return client.update_project(project_id, payload).model_dump(exclude_none=False)
     except TickTickAPIError as e:
         return _err(e)
@@ -529,6 +483,11 @@ def create_task(
     [Related: update_task, complete_task, set_subtask_parent, build_recurrence_rule]
     [Workflow: For subtasks → create_task then set_subtask_parent]
 
+    ⚠️ SUBTASK TRAP — parentId is SILENTLY IGNORED by the V1 creation endpoint.
+    Passing parentId in the payload creates a standalone task with no error or warning.
+    ALWAYS use set_subtask_parent AFTER creation to establish the relationship.
+    Correct sequence: create_task (parent) → create_task / batch_create_tasks (children) → set_subtask_parent × N
+
     Args:
         title: Task title (required).
         project_id: Target project ID. Omit → Inbox.
@@ -620,6 +579,16 @@ def update_task(
         all_day: True/False.
         column_id: Move to a kanban column.
         reminder_minutes: List of minutes-before. Pass [] to clear reminders.
+            ⚠️ V1/V2 GOTCHA — REMINDER ANCHOR REQUIRED:
+            Tasks created via V2 batch may have dueDate invisible to V1 (returns null).
+            V1 uses dueDate as the anchor to compute reminder trigger offsets (TRIGGER:-P2D).
+            If due_date is null, reminder_minutes is silently ignored — no error, no reminder.
+            FIX: ALWAYS pass due_date + time_zone explicitly alongside reminder_minutes,
+            even if you are not changing the due date. Read the existing due date from
+            get_task_detail() first, then pass it through. Example:
+                update_task(task_id='...', project_id='...', due_date='2026-06-03T21:00:00+0000',
+                            time_zone='Europe/Paris', reminder_minutes=[2880, 1440])
+            Returns reminders: ['TRIGGER:-P2D', 'TRIGGER:-P1D'] when correctly anchored.
         recurrence: RRULE string (use build_recurrence_rule). Pass "" to clear.
         progress: 0-100 percentage (V2).
         sort_order: Custom sort order.
@@ -766,10 +735,15 @@ def batch_create_tasks(tasks: list[dict]) -> dict:
     [Category: Tasks — Batch]  [Auth: V2]
     [Related: create_task, batch_update_tasks, batch_delete_tasks]
 
+    ⚠️ SUBTASK TRAP — parentId in the task dict is SILENTLY IGNORED here too (V2 batch).
+    Do NOT pass parentId expecting subtask relationships to be created automatically.
+    ALWAYS call set_subtask_parent for each child AFTER this call.
+
     Args:
         tasks: List of task dicts. Each needs at least {"title": "..."}.
             Optional: projectId, content, priority, dueDate, startDate,
             timeZone, tags, allDay, kind, items, columnId.
+            ⚠️ Do NOT include parentId — use set_subtask_parent instead.
 
     Returns: {id2etag: {id: etag}, id2error: {id: error}} — check id2error for failures.
     """
@@ -790,6 +764,15 @@ def batch_update_tasks(tasks: list[dict]) -> dict:
     Args:
         tasks: List of task dicts. Each MUST include "id" and "projectId"
             plus fields to change. ⚠️ No read-modify-write — provide full field values.
+
+    ⚠️ REMINDER RELIABILITY — DO NOT USE THIS TOOL FOR REMINDER UPDATES:
+    batch_update_tasks() uses the V2 batch endpoint which cannot reliably set reminders
+    on existing tasks, for two compounding reasons:
+      1. V2-created tasks may have dueDate invisible to V1 (null), breaking reminder anchoring.
+      2. Reminder object format {"trigger": "TRIGGER:-P2DT0H0M0S"} is silently rejected by the
+         V2 batch endpoint — no error returned, but reminders are never saved.
+    PREFERRED PATTERN: use update_task() (V1) with explicit due_date + time_zone + reminder_minutes.
+    See the "Add/update reminders" workflow in ticktick_guide(show_workflows=True).
 
     Returns: {id2etag, id2error}.
     """
@@ -822,14 +805,64 @@ def move_tasks(moves: list[dict]) -> dict:
     Move tasks between projects via V2 batch.
 
     [Category: Tasks — Batch]  [Auth: V2]
-    [Related: batch_update_tasks, list_projects]
+    [Related: batch_update_tasks, list_projects, set_subtask_parent]
+
+    ⚠️ ORPHAN TRAP — The V2 API moves tasks individually, never cascading to children.
+    Moving a parent task leaves its subtasks stranded in the old project.
+    The parent-child relationship (parentId/childIds) is preserved in the metadata,
+    but TickTick won't display subtasks correctly if they're in a different project.
+
+    This tool automatically detects and cascades to children:
+    For each unique source project, it fetches the full project data once via
+    /project/{id}/data (which correctly returns childIds, unlike /project/{id}/task/{id}).
+    A {task_id: childIds} index is built per source project — O(1) API calls per project,
+    not per task. Children are appended to the move batch automatically (same destination).
+    The returned dict includes `cascaded_children` listing any auto-added child moves.
 
     Args:
         moves: List of {"taskId": "...", "fromProjectId": "...", "toProjectId": "..."}.
+            Only provide parent tasks — children are fetched and moved automatically.
     """
     try:
-        result = client.move_tasks(moves)
-        return result if isinstance(result, dict) else {"result": result}
+        # Build a {project_id: {task_id: childIds}} index — one API call per unique
+        # source project via /project/{id}/data (V1), which correctly returns childIds.
+        # get_task() uses /project/{id}/task/{id} which does NOT return childIds.
+        source_projects = {m["fromProjectId"] for m in moves}
+        child_index: dict[str, dict[str, list[str]]] = {}
+        for proj_id in source_projects:
+            try:
+                project_data = client.get_project_data(proj_id)
+                child_index[proj_id] = {
+                    t.id: (t.childIds or [])
+                    for t in project_data.tasks
+                    if t.id
+                }
+            except Exception:
+                child_index[proj_id] = {}
+
+        augmented = list(moves)
+        cascaded: list[dict] = []
+
+        for move in moves:
+            task_id = move["taskId"]
+            from_project = move["fromProjectId"]
+            to_project = move["toProjectId"]
+            child_ids = child_index.get(from_project, {}).get(task_id, [])
+
+            for child_id in child_ids:
+                child_move = {
+                    "taskId": child_id,
+                    "fromProjectId": from_project,
+                    "toProjectId": to_project,
+                }
+                augmented.append(child_move)
+                cascaded.append(child_move)
+
+        result = client.move_tasks(augmented)
+        out = result if isinstance(result, dict) else {"result": result}
+        if cascaded:
+            out["cascaded_children"] = cascaded
+        return out
     except TickTickAPIError as e:
         return _err(e)
 
@@ -1268,7 +1301,8 @@ def update_habit(
     target_days: Optional[int] = None,
 ) -> dict:
     """
-    Update an existing habit. Only provided fields are changed.
+    Update an existing habit. Only provided fields are changed
+    (read-modify-write under the hood — safe for partial updates).
 
     [Category: Habits]  [Auth: V2]
     [Related: list_habits, create_habit, delete_habit]
@@ -1283,16 +1317,35 @@ def update_habit(
         status: 0=active, 2=archived.
         section_id: Move to a different section.
         repeat_rule: New RRULE (use build_recurrence_rule).
-        reminders: New reminder times, e.g. ["08:00"].
+        reminders: New reminder times list, e.g. ["08:00", "20:00"].
+                   Pass [] to clear all reminders.
         encouragement: New completion message.
         target_days: New target days.
 
+    ⚠️  CRITICAL — V2 /habits/batch is a FULL REPLACEMENT, not a PATCH:
+        Sending only {"id": ..., "reminders": [...]} will wipe name, color,
+        status and every other field to null/default. This tool prevents that
+        by fetching the current habit state first, then merging your changes
+        before sending the complete object. Never call client.batch_habits
+        with a partial habit dict directly.
+
     Common uses:
-        Archive:  update_habit(habit_id="...", status=2)
-        Rename:   update_habit(habit_id="...", name="New Name")
+        Archive:        update_habit(habit_id="...", status=2)
+        Rename:         update_habit(habit_id="...", name="New Name")
+        Add reminders:  update_habit(habit_id="...", reminders=["08:00", "20:00"])
+        Clear reminders: update_habit(habit_id="...", reminders=[])
     """
     try:
-        habit: dict = {"id": habit_id}
+        # Read current state — V2 /habits/batch replaces the entire object,
+        # so we must fetch first to avoid wiping all unprovided fields.
+        all_habits: list = client._v2_get("/habits")
+        current = next((h for h in all_habits if h.get("id") == habit_id), None)
+        if current is None:
+            return {"error": True, "status_code": 404, "message": f"Habit {habit_id} not found."}
+
+        # Start from existing state, then apply caller overrides.
+        habit: dict = {k: v for k, v in current.items()}
+        habit["id"] = habit_id
         if name is not None:           habit["name"] = name
         if goal is not None:           habit["goal"] = goal
         if step is not None:           habit["step"] = step
@@ -1453,3 +1506,26 @@ def get_productivity_stats() -> dict:
         return client.get_productivity_stats()
     except TickTickAPIError as e:
         return _err(e)
+
+
+# Additional tool groups are implemented in dedicated modules to keep the main
+# server surface organized while preserving the public MCP tool names.
+from .read_api import (  # noqa: E402,F401
+    workspace_map,
+    query_projects,
+    query_folders,
+    query_tasks,
+    query_notes,
+    query_agenda,
+    tasks_of_today,
+    events_of_today,
+    overdue_tasks,
+    stale_tasks,
+    query_task_history,
+)
+from .safe_api import (  # noqa: E402,F401
+    create_subtask,
+    verified_set_subtask_parent,
+    verified_move_tasks,
+    verified_assign_project_folder,
+)

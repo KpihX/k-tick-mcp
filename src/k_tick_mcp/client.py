@@ -287,7 +287,12 @@ def create_project(payload: dict) -> Project:
 
 
 def update_project(project_id: str, payload: dict) -> Project:
-    """POST /project/{projectId} — full or partial project object."""
+    """POST /project/{projectId} — full or partial project object.
+
+    ⚠️  V1 limitation: the `groupId` field is silently ignored by this
+    endpoint. Use batch_projects() (V2) to persist folder assignments.
+    The response also always returns groupId=null even when set via V2.
+    """
     data = _v1_post(f"/project/{project_id}", payload)
     return Project.model_validate(data)
 
@@ -529,6 +534,29 @@ def batch_project_groups(
     """POST /batch/projectGroup — create, update, delete project folders."""
     payload = {"add": add or [], "update": update or [], "delete": delete or []}
     return _v2_post("/batch/projectGroup", payload)
+
+
+def batch_projects(update: list[dict]) -> dict:
+    """POST /batch/project — update project fields via V2 (supports groupId).
+
+    ⚠️  REPLACE semantics: the API treats the payload as a partial REPLACE.
+    Fields NOT included in each item dict may be wiped (notably `name`).
+    Always include all critical fields (id, name, kind, color, groupId, …)
+    by doing a read-modify-write before calling this function.
+
+    The V1 update_project endpoint silently ignores groupId — use this
+    function when folder assignment (groupId) must actually persist.
+
+    Args:
+        update: List of project dicts. Each MUST include:
+            - "id": project ID
+            - "name": project name  ← required; omitting it will null the name
+            Recommended: also include kind, color, viewMode, sortOrder.
+
+    Returns: {"id2etag": {projectId: etag}, "id2error": {projectId: error}}.
+    Check id2error before assuming success.
+    """
+    return _v2_post("/batch/project", {"update": update})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

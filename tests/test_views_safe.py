@@ -1,0 +1,96 @@
+"""
+Unit tests for high-level views and verified structural wrappers.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+from k_tick_mcp import read_api, safe_api
+from k_tick_mcp import server as server_mod
+from k_tick_mcp.models import Project, ProjectData, Task
+
+
+@pytest.mark.unit
+class TestReadViews:
+    def test_tasks_of_today_delegates_to_query_agenda(self, monkeypatch):
+        captured = {}
+
+        def fake_query_agenda(**kwargs):
+            captured.update(kwargs)
+            return {"count": 0, "items": []}
+
+        monkeypatch.setattr(read_api, "query_agenda", fake_query_agenda)
+        read_api.tasks_of_today(local_date="2026-03-20", project_names=["Agenda"])
+
+        assert captured["date_field"] == "scheduled"
+        assert captured["project_names"] == ["Agenda"]
+        assert captured["limit"] == 50
+
+    def test_events_of_today_forces_timed_items(self, monkeypatch):
+        captured = {}
+
+        def fake_query_agenda(**kwargs):
+            captured.update(kwargs)
+            return {"count": 0, "items": []}
+
+        monkeypatch.setattr(read_api, "query_agenda", fake_query_agenda)
+        read_api.events_of_today(local_date="2026-03-20", time_from="09:00", time_to="12:00")
+
+        assert captured["timed_only"] is True
+        assert captured["time_from"] == "09:00"
+        assert captured["time_to"] == "12:00"
+
+
+@pytest.mark.unit
+class TestVerifiedActions:
+    def test_create_subtask_verifies_child_and_parent(self, monkeypatch):
+        monkeypatch.setattr(server_mod, "create_task", lambda **kwargs: {"id": "child1", "projectId": "p1", "title": kwargs["title"]})
+        monkeypatch.setattr(server_mod, "set_subtask_parent", lambda **kwargs: {"ok": True})
+        monkeypatch.setattr(safe_api.client, "get_task", lambda project_id, task_id: Task(id=task_id, projectId=project_id, title="Child", parentId="parent1"))
+        monkeypatch.setattr(
+            safe_api.client,
+            "get_project_data",
+            lambda project_id: ProjectData(
+                project=Project(id=project_id, name="Work"),
+                tasks=[Task(id="parent1", projectId=project_id, title="Parent", childIds=["child1"])],
+            ),
+        )
+
+        result = safe_api.create_subtask(title="Child", project_id="p1", parent_id="parent1")
+
+        assert result["verified"] is True
+        assert result["created"]["parentId"] == "parent1"
+
+    def test_verified_move_tasks_checks_destination_presence(self, monkeypatch):
+        monkeypatch.setattr(server_mod, "move_tasks", lambda moves: {"result": "ok", "cascaded_children": [{"taskId": "child1", "fromProjectId": "p1", "toProjectId": "p2"}]})
+        monkeypatch.setattr(
+            safe_api.client,
+            "get_project_data",
+            lambda project_id: ProjectData(
+                project=Project(id=project_id, name="Dest"),
+                tasks=[
+                    Task(id="task1", projectId=project_id, title="Moved"),
+                    Task(id="child1", projectId=project_id, title="Moved child"),
+                ],
+            ),
+        )
+
+        result = safe_api.verified_move_tasks([{"taskId": "task1", "fromProjectId": "p1", "toProjectId": "p2"}])
+
+        assert result["verified"] is True
+        assert result["verification"][0]["missing_task_ids"] == []
+
+    def test_verified_assign_project_folder_uses_sync_state(self, monkeypatch):
+        sync_states = [
+            SimpleNamespace(projectProfiles=[Project(id="p1", name="Alpha", groupId=None)]),
+            SimpleNamespace(projectProfiles=[Project(id="p1", name="Alpha", groupId="g1")]),
+        ]
+        monkeypatch.setattr(safe_api.client, "sync_all", lambda: sync_states.pop(0))
+        monkeypatch.setattr(server_mod, "update_project", lambda **kwargs: {"id": kwargs["project_id"], "groupId": kwargs["group_id"]})
+
+        result = safe_api.verified_assign_project_folder(project_id="p1", group_id="g1")
+
+        assert result["verified"] is True
+        assert result["after"]["groupId"] == "g1"

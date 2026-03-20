@@ -1,0 +1,538 @@
+"""
+High-level read/query MCP tools for TickTick.
+
+This module is imported by `server.py` after the shared helpers are defined.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+import re
+from typing import Optional
+
+from .server_core import mcp, _err, _query_service, _make_task_filter_spec, TickTickAPIError
+
+
+def _local_day_bounds(raw_date: Optional[str]) -> tuple[str, str]:
+    if raw_date:
+        day = datetime.fromisoformat(raw_date).date()
+    else:
+        day = datetime.now().astimezone().date()
+    start = datetime.combine(day, datetime.min.time())
+    end = datetime.combine(day, datetime.max.time()).replace(microsecond=0)
+    return start.isoformat(), end.isoformat()
+
+
+@mcp.tool()
+def workspace_map(
+    include_closed: bool = False,
+    include_counts: bool = False,
+    project_name_query: Optional[str] = None,
+    project_regex: Optional[str] = None,
+    folder_name_query: Optional[str] = None,
+    folder_regex: Optional[str] = None,
+) -> dict:
+    """
+    Return a navigable map of folders and projects, optionally with active task counts.
+
+    [Category: Query & Search]  [Auth: V1 + V2 when include_counts=True]
+    [Related: list_projects, list_project_folders, full_sync, query_projects]
+    """
+    try:
+        return _query_service().workspace_map(
+            include_closed=include_closed,
+            include_counts=include_counts,
+            project_name_query=project_name_query,
+            project_regex=project_regex,
+            folder_name_query=folder_name_query,
+            folder_regex=folder_regex,
+        )
+    except (TickTickAPIError, ValueError) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def query_projects(
+    name_query: Optional[str] = None,
+    regex: Optional[str] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    kinds: Optional[list[str]] = None,
+    include_closed: bool = False,
+    limit: int = 50,
+    sort_by: str = "name",
+    descending: bool = False,
+) -> dict:
+    """
+    Search/filter projects with folder-aware metadata.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: workspace_map, list_projects, list_project_folders, query_folders]
+    """
+    try:
+        return _query_service().query_projects(
+            name_query=name_query,
+            regex=regex,
+            folder_ids=folder_ids,
+            folder_names=folder_names,
+            kinds=kinds,
+            include_closed=include_closed,
+            limit=limit,
+            sort_by=sort_by,
+            descending=descending,
+        )
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def query_folders(
+    name_query: Optional[str] = None,
+    regex: Optional[str] = None,
+    include_project_counts: bool = True,
+    limit: int = 50,
+) -> dict:
+    """
+    Search/filter project folders with optional project counts.
+
+    [Category: Query & Search]  [Auth: V1 + V2 when include_project_counts=True]
+    [Related: workspace_map, list_project_folders, query_projects]
+    """
+    try:
+        return _query_service().query_folders(
+            name_query=name_query,
+            regex=regex,
+            include_project_counts=include_project_counts,
+            limit=limit,
+        )
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def query_tasks(
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    tag_mode: str = "any",
+    text_query: Optional[str] = None,
+    keyword_mode: str = "any",
+    regex: Optional[str] = None,
+    exclude_regex: Optional[str] = None,
+    search_fields: Optional[list[str]] = None,
+    due_from: Optional[str] = None,
+    due_to: Optional[str] = None,
+    start_from: Optional[str] = None,
+    start_to: Optional[str] = None,
+    modified_from: Optional[str] = None,
+    modified_to: Optional[str] = None,
+    created_from: Optional[str] = None,
+    created_to: Optional[str] = None,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
+    timed_only: bool = False,
+    all_day: Optional[bool] = None,
+    min_priority: Optional[int] = None,
+    priorities: Optional[list[int]] = None,
+    has_reminders: Optional[bool] = None,
+    is_recurring: Optional[bool] = None,
+    has_checklist: Optional[bool] = None,
+    parent_only: bool = False,
+    subtasks_only: bool = False,
+    limit: int = 50,
+    sort_by: str = "dueDate",
+    descending: bool = False,
+) -> dict:
+    """
+    Query active tasks with fine-grained filters, date/hour ranges, and grep-like matching.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_notes, query_agenda, get_all_tasks, get_project_tasks]
+    """
+    try:
+        spec = _make_task_filter_spec(
+            project_ids=project_ids,
+            project_names=project_names,
+            folder_ids=folder_ids,
+            folder_names=folder_names,
+            tags=tags,
+            tag_mode=tag_mode,
+            text_query=text_query,
+            keyword_mode=keyword_mode,
+            regex=regex,
+            exclude_regex=exclude_regex,
+            search_fields=search_fields,
+            due_from=due_from,
+            due_to=due_to,
+            start_from=start_from,
+            start_to=start_to,
+            modified_from=modified_from,
+            modified_to=modified_to,
+            created_from=created_from,
+            created_to=created_to,
+            time_from=time_from,
+            time_to=time_to,
+            timed_only=timed_only,
+            all_day=all_day,
+            min_priority=min_priority,
+            priorities=priorities,
+            has_reminders=has_reminders,
+            is_recurring=is_recurring,
+            has_checklist=has_checklist,
+            parent_only=parent_only,
+            subtasks_only=subtasks_only,
+            limit=limit,
+            sort_by=sort_by,
+            descending=descending,
+        )
+        return _query_service().query_tasks(spec)
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def query_notes(
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    keyword_mode: str = "any",
+    regex: Optional[str] = None,
+    exclude_regex: Optional[str] = None,
+    search_fields: Optional[list[str]] = None,
+    created_from: Optional[str] = None,
+    created_to: Optional[str] = None,
+    modified_from: Optional[str] = None,
+    modified_to: Optional[str] = None,
+    limit: int = 50,
+    sort_by: str = "modifiedTime",
+    descending: bool = True,
+) -> dict:
+    """
+    Query notes with folder/project scope and grep-like content search.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_tasks, workspace_map, get_project_tasks]
+    """
+    try:
+        spec = _make_task_filter_spec(
+            project_ids=project_ids,
+            project_names=project_names,
+            folder_ids=folder_ids,
+            folder_names=folder_names,
+            text_query=text_query,
+            keyword_mode=keyword_mode,
+            regex=regex,
+            exclude_regex=exclude_regex,
+            search_fields=search_fields,
+            created_from=created_from,
+            created_to=created_to,
+            modified_from=modified_from,
+            modified_to=modified_to,
+            limit=limit,
+            sort_by=sort_by,
+            descending=descending,
+        )
+        return _query_service().query_notes(spec)
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def query_agenda(
+    from_dt: str,
+    to_dt: str,
+    date_field: str = "scheduled",
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    tag_mode: str = "any",
+    text_query: Optional[str] = None,
+    keyword_mode: str = "any",
+    regex: Optional[str] = None,
+    exclude_regex: Optional[str] = None,
+    search_fields: Optional[list[str]] = None,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
+    timed_only: bool = False,
+    all_day: Optional[bool] = None,
+    min_priority: Optional[int] = None,
+    priorities: Optional[list[int]] = None,
+    has_reminders: Optional[bool] = None,
+    is_recurring: Optional[bool] = None,
+    has_checklist: Optional[bool] = None,
+    parent_only: bool = False,
+    subtasks_only: bool = False,
+    limit: int = 50,
+    sort_by: str = "dueDate",
+    descending: bool = False,
+) -> dict:
+    """
+    Query scheduled items inside a date/time window.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_tasks, get_all_tasks, get_project_tasks]
+    """
+    try:
+        spec = _make_task_filter_spec(
+            project_ids=project_ids,
+            project_names=project_names,
+            folder_ids=folder_ids,
+            folder_names=folder_names,
+            tags=tags,
+            tag_mode=tag_mode,
+            text_query=text_query,
+            keyword_mode=keyword_mode,
+            regex=regex,
+            exclude_regex=exclude_regex,
+            search_fields=search_fields,
+            time_from=time_from,
+            time_to=time_to,
+            timed_only=timed_only,
+            all_day=all_day,
+            min_priority=min_priority,
+            priorities=priorities,
+            has_reminders=has_reminders,
+            is_recurring=is_recurring,
+            has_checklist=has_checklist,
+            parent_only=parent_only,
+            subtasks_only=subtasks_only,
+            limit=limit,
+            sort_by=sort_by,
+            descending=descending,
+        )
+        return _query_service().query_agenda(from_dt=from_dt, to_dt=to_dt, spec=spec, date_field=date_field)
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
+
+
+@mcp.tool()
+def tasks_of_today(
+    local_date: Optional[str] = None,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    limit: int = 50,
+) -> dict:
+    """
+    Return active tasks scheduled for a given local day.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_agenda, events_of_today, overdue_tasks]
+    """
+    start, end = _local_day_bounds(local_date)
+    return query_agenda(
+        from_dt=start,
+        to_dt=end,
+        date_field="scheduled",
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        limit=limit,
+        sort_by="dueDate",
+        descending=False,
+    )
+
+
+@mcp.tool()
+def events_of_today(
+    local_date: Optional[str] = None,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
+    limit: int = 50,
+) -> dict:
+    """
+    Return timed scheduled items for a given local day.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: tasks_of_today, query_agenda]
+    """
+    start, end = _local_day_bounds(local_date)
+    return query_agenda(
+        from_dt=start,
+        to_dt=end,
+        date_field="scheduled",
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        time_from=time_from,
+        time_to=time_to,
+        timed_only=True,
+        limit=limit,
+        sort_by="dueDate",
+        descending=False,
+    )
+
+
+@mcp.tool()
+def overdue_tasks(
+    before_dt: Optional[str] = None,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    limit: int = 50,
+) -> dict:
+    """
+    Return active tasks whose due date is already in the past.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: tasks_of_today, query_tasks, stale_tasks]
+    """
+    now = before_dt or datetime.now().astimezone().replace(microsecond=0).isoformat()
+    return query_tasks(
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        due_to=now,
+        limit=limit,
+        sort_by="dueDate",
+        descending=False,
+    )
+
+
+@mcp.tool()
+def stale_tasks(
+    older_than_days: int = 30,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    limit: int = 50,
+) -> dict:
+    """
+    Return active tasks that have not been modified recently.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_tasks, overdue_tasks]
+    """
+    threshold = datetime.now().astimezone().replace(microsecond=0) - timedelta(days=older_than_days)
+    return query_tasks(
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        modified_to=threshold.isoformat(),
+        limit=limit,
+        sort_by="modifiedTime",
+        descending=False,
+    )
+
+
+@mcp.tool()
+def query_task_history(
+    history_source: str,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    tag_mode: str = "any",
+    text_query: Optional[str] = None,
+    keyword_mode: str = "any",
+    regex: Optional[str] = None,
+    exclude_regex: Optional[str] = None,
+    search_fields: Optional[list[str]] = None,
+    due_from: Optional[str] = None,
+    due_to: Optional[str] = None,
+    start_from: Optional[str] = None,
+    start_to: Optional[str] = None,
+    modified_from: Optional[str] = None,
+    modified_to: Optional[str] = None,
+    created_from: Optional[str] = None,
+    created_to: Optional[str] = None,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
+    timed_only: bool = False,
+    all_day: Optional[bool] = None,
+    min_priority: Optional[int] = None,
+    priorities: Optional[list[int]] = None,
+    has_reminders: Optional[bool] = None,
+    is_recurring: Optional[bool] = None,
+    has_checklist: Optional[bool] = None,
+    parent_only: bool = False,
+    subtasks_only: bool = False,
+    limit: int = 50,
+    sort_by: str = "completedTime",
+    descending: bool = True,
+) -> dict:
+    """
+    Query completed, abandoned, or deleted task history with the same fine filters.
+
+    [Category: Query & Search]  [Auth: V2]
+    [Related: get_completed_tasks, get_deleted_tasks, query_tasks]
+    """
+    try:
+        spec = _make_task_filter_spec(
+            project_ids=project_ids,
+            project_names=project_names,
+            folder_ids=folder_ids,
+            folder_names=folder_names,
+            tags=tags,
+            tag_mode=tag_mode,
+            text_query=text_query,
+            keyword_mode=keyword_mode,
+            regex=regex,
+            exclude_regex=exclude_regex,
+            search_fields=search_fields,
+            due_from=due_from,
+            due_to=due_to,
+            start_from=start_from,
+            start_to=start_to,
+            modified_from=modified_from,
+            modified_to=modified_to,
+            created_from=created_from,
+            created_to=created_to,
+            time_from=time_from,
+            time_to=time_to,
+            timed_only=timed_only,
+            all_day=all_day,
+            min_priority=min_priority,
+            priorities=priorities,
+            has_reminders=has_reminders,
+            is_recurring=is_recurring,
+            has_checklist=has_checklist,
+            parent_only=parent_only,
+            subtasks_only=subtasks_only,
+            limit=limit,
+            sort_by=sort_by,
+            descending=descending,
+        )
+        return _query_service().query_task_history(
+            history_source=history_source,
+            from_date=from_date,
+            to_date=to_date,
+            spec=spec,
+        )
+    except (TickTickAPIError, ValueError, re.error) as e:
+        return _err(e)
