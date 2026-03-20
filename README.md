@@ -1,7 +1,7 @@
 # ticktick-mcp
 
-[![PyPI](https://img.shields.io/pypi/v/ticktick_mcp)](https://pypi.org/project/ticktick_mcp/)
-[![Python](https://img.shields.io/pypi/pyversions/ticktick_mcp)](https://pypi.org/project/ticktick_mcp/)
+[![PyPI](https://img.shields.io/pypi/v/ticktick-mcp)](https://pypi.org/project/ticktick-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/ticktick-mcp)](https://pypi.org/project/ticktick-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **MCP server for TickTick** — manage tasks, projects, habits, tags, focus stats, and more through the [Model Context Protocol](https://modelcontextprotocol.io/).
@@ -95,10 +95,10 @@ src/ticktick_mcp/
 
 ```bash
 # recommended — installs as a standalone tool
-uv tool install ticktick_mcp
+uv tool install ticktick-mcp
 
 # or via pip
-pip install ticktick_mcp
+pip install ticktick-mcp
 ```
 
 This provides two commands:

@@ -1,5 +1,5 @@
 [project]
-name = "ticktick_mcp"
+name = "ticktick-mcp"
 version = "0.1.0"
 description = "MCP server for TickTick — task and notes access via Model Context Protocol."
 readme = "README.md"
@@ -57,4 +57,3 @@ timeout = 30
 [build-system]
 requires = ["uv_build>=0.10.3,<0.11.0"]
 build-backend = "uv_build"
-
