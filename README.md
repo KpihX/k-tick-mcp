@@ -44,6 +44,32 @@
 - **Move verification** — `verified_move_tasks` re-reads destination projects and confirms every moved task is actually there.
 - **Folder assignment verification** — `verified_assign_project_folder` verifies the persisted `groupId` through V2 sync, not through the misleading V1 response.
 
+## Package Layout
+
+```text
+src/k_tick_mcp/
+├── mcp_api/
+│   ├── core.py          # shared FastMCP instance, catalog, helpers
+│   ├── utilities.py     # discovery + helper tools
+│   ├── projects.py      # project CRUD tools
+│   ├── tasks_read.py    # inbox / project / task reads
+│   ├── tasks_write.py   # task mutation tools
+│   ├── tasks_batch.py   # batch + structural task operations
+│   ├── read.py          # high-level query/search and ready-made views
+│   ├── verified.py      # safe wrappers with read-back verification
+│   ├── folders.py       # folders + kanban columns
+│   ├── tags.py          # tag tools
+│   ├── habits.py        # habit tools
+│   ├── history.py       # completed / deleted history
+│   └── stats.py         # focus and user/productivity stats
+├── services/
+│   └── query.py         # reusable filtering, range and grep-like planning
+├── client.py            # raw TickTick V1/V2 transport + validated responses
+├── models.py            # pydantic contracts
+├── server.py            # stable public import surface for the MCP server
+└── main.py              # CLI entrypoint
+```
+
 ## Installation
 
 ```bash

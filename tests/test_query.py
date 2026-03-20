@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 
 from k_tick_mcp.models import Project, ProjectData, ProjectGroup, Task, ChecklistItem
-from k_tick_mcp.query import TaskFilterSpec, TickTickQueryService
+from k_tick_mcp.services.query import TaskFilterSpec, TickTickQueryService
 
 
 class FakeClient:

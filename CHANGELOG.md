@@ -20,7 +20,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- **Server organization** — shared MCP state/helpers now live in `server_core.py`, with read/query tools isolated in `read_api.py` and verified workflow helpers in `safe_api.py`.
+- **Server organization** — shared MCP state/helpers now live in `mcp_api/core.py`, with read/query tools isolated in `mcp_api/read.py`, verified workflow helpers in `mcp_api/verified.py`, and reusable filters/planning in `services/query.py`.
 
 ## [0.1.0] — 2025-07-13
 

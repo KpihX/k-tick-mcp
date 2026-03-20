@@ -7,10 +7,10 @@ from typing import Any, Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from .config import SERVER_NAME, has_v2_auth, ENV_SESSION_TOKEN, SESSION_COOKIE_NAME
-from . import client
-from .models import TickTickAPIError, Priority, build_reminder_trigger, build_rrule
-from .query import TaskFilterSpec, TickTickQueryService
+from ..config import SERVER_NAME, has_v2_auth, ENV_SESSION_TOKEN, SESSION_COOKIE_NAME
+from .. import client
+from ..models import TickTickAPIError, Priority, build_reminder_trigger, build_rrule
+from ..services.query import TaskFilterSpec, TickTickQueryService
 
 mcp = FastMCP(SERVER_NAME)
 

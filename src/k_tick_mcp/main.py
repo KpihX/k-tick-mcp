@@ -3,7 +3,7 @@ import sys
 import signal
 import typer
 from rich.console import Console
-from .server import mcp
+from .mcp_api import mcp
 from . import daemon
 
 console = Console(stderr=True)          # ALL CLI output → stderr (stdout = MCP stdio)

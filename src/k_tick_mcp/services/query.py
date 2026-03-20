@@ -14,7 +14,7 @@ from datetime import date, datetime, time, timezone
 import re
 from typing import Any, Iterable, Optional
 
-from .models import Priority, Project, ProjectGroup, ProjectKind, Task, TaskStatus
+from ..models import Priority, Project, ProjectGroup, ProjectKind, Task, TaskStatus
 
 
 DEFAULT_TASK_FIELDS = ["title", "content", "desc", "tags", "project", "folder"]

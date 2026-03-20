@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .server_core import mcp, _err, _task_dict, client, TickTickAPIError
+from .core import mcp, _err, _task_dict, client, TickTickAPIError
 
 
 def _project_child_index(project_id: str) -> dict[str, list[str]]:
@@ -45,7 +45,7 @@ def create_subtask(
     [Category: Verified Actions]  [Auth: V1 + V2]
     [Related: create_task, set_subtask_parent, verified_set_subtask_parent]
     """
-    from .server import create_task, set_subtask_parent
+    from ..server import create_task, set_subtask_parent
 
     try:
         created = create_task(
@@ -107,7 +107,7 @@ def verified_set_subtask_parent(
     [Category: Verified Actions]  [Auth: V2]
     [Related: set_subtask_parent, create_subtask]
     """
-    from .server import set_subtask_parent
+    from ..server import set_subtask_parent
 
     try:
         result = set_subtask_parent(
@@ -149,7 +149,7 @@ def verified_move_tasks(moves: list[dict]) -> dict:
     [Category: Verified Actions]  [Auth: V2]
     [Related: move_tasks, set_subtask_parent]
     """
-    from .server import move_tasks
+    from ..server import move_tasks
 
     try:
         result = move_tasks(moves)
@@ -200,7 +200,7 @@ def verified_assign_project_folder(project_id: str, group_id: str) -> dict:
     [Category: Verified Actions]  [Auth: V1 + V2]
     [Related: update_project, list_project_folders, full_sync]
     """
-    from .server import update_project
+    from ..server import update_project
 
     try:
         before_sync = client.sync_all()

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import re
 from typing import Optional
 
-from .server_core import mcp, _err, _query_service, _make_task_filter_spec, TickTickAPIError
+from .core import mcp, _err, _query_service, _make_task_filter_spec, TickTickAPIError
 
 
 def _local_day_bounds(raw_date: Optional[str]) -> tuple[str, str]:
