@@ -7,6 +7,7 @@ from .core import (
     mcp,
     TOOL_CATALOG,
     COMMON_WORKFLOWS,
+    INTENT_GUIDE,
     _err,
     _task_dict,
     _model_list,
@@ -23,6 +24,7 @@ from .core import (
 @mcp.tool()
 def ticktick_guide(
     category: Optional[str] = None,
+    intent: Optional[str] = None,
     show_workflows: bool = False,
 ) -> dict:
     """
@@ -33,11 +35,14 @@ def ticktick_guide(
 
     Call with no args to see all categories and tool names.
     Call with a category name to see tools in that category.
+    Call with an intent name to see the recommended tool path for a real user goal.
     Call with show_workflows=True to see common multi-step patterns.
 
     Args:
         category: Filter by category name (partial match, case-insensitive).
             Examples: "task", "tag", "habit", "project", "sync", "focus".
+        intent: Filter by user intent, e.g. "know_what_to_do_today", "find_a_note",
+            "reorganize_projects", or "clean_up_tasks".
         show_workflows: If True, return common multi-step workflow recipes.
 
     Tip: Call check_v2_availability() to see which features need a session token.
@@ -72,6 +77,18 @@ def ticktick_guide(
     if show_workflows:
         return {"workflows": COMMON_WORKFLOWS}
 
+    if intent:
+        intent_key = intent.strip().lower()
+        if intent_key in INTENT_GUIDE:
+            payload = INTENT_GUIDE[intent_key]
+            return {"intent": intent_key, **payload}
+        return {
+            "error": False,
+            "message": (
+                f"No intent matching '{intent}'. Available: {sorted(INTENT_GUIDE.keys())}"
+            ),
+        }
+
     if category:
         cat_lower = category.lower()
         filtered = {
@@ -94,7 +111,12 @@ def ticktick_guide(
     return {
         "total_tools": total,
         "categories": summary,
-        "tip": "Call ticktick_guide(category='tasks') to drill into a category, or ticktick_guide(show_workflows=True) for step-by-step recipes.",
+        "intents": INTENT_GUIDE,
+        "tip": (
+            "Call ticktick_guide(category='tasks') to drill into a category, "
+            "ticktick_guide(intent='know_what_to_do_today') for a goal-oriented path, "
+            "or ticktick_guide(show_workflows=True) for step-by-step recipes."
+        ),
     }
 
 

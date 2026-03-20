@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from k_tick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, _err, _task_dict
+from k_tick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, __all__, _err, _task_dict
+from k_tick_mcp.mcp_api.utilities import ticktick_guide
 from k_tick_mcp.models import TickTickAPIError, Task, Priority, TaskStatus
 
 
@@ -54,6 +55,22 @@ class TestToolCatalog:
         assert "habit" in joined
         assert "sync" in joined
 
+    def test_catalog_matches_public_exports_and_registered_tools(self):
+        catalog_tools = {
+            tool_name
+            for category in TOOL_CATALOG.values()
+            for tool_name in category["tools"]
+        }
+        exported_tools = {
+            name
+            for name in __all__
+            if not name.startswith("_")
+            and name not in {"mcp", "TOOL_CATALOG", "COMMON_WORKFLOWS", "INTENT_GUIDE"}
+        }
+        registered_tools = set(mcp._tool_manager._tools)
+        assert catalog_tools == exported_tools
+        assert catalog_tools == registered_tools
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Workflows
@@ -70,6 +87,12 @@ class TestWorkflows:
             assert "steps" in wf
             assert isinstance(wf["steps"], list)
             assert len(wf["steps"]) > 0
+
+    def test_ticktick_guide_supports_intent_views(self):
+        result = ticktick_guide(intent="know_what_to_do_today")
+        assert result["intent"] == "know_what_to_do_today"
+        assert "tasks_of_today" in result["tools"]
+        assert "events_of_today" in result["tools"]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

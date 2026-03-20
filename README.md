@@ -46,6 +46,19 @@
 - **Move verification** — `verified_move_tasks` re-reads destination projects and confirms every moved task is actually there.
 - **Folder assignment verification** — `verified_assign_project_folder` verifies the persisted `groupId` through V2 sync, not through the misleading V1 response.
 
+### Intent-first discovery
+
+`ticktick_guide()` supports both technical categories and real user goals.
+
+- Category-oriented:
+  - `ticktick_guide(category="tasks")`
+- Intent-oriented:
+  - `ticktick_guide(intent="know_what_to_do_today")`
+  - `ticktick_guide(intent="plan_the_week")`
+  - `ticktick_guide(intent="find_a_note")`
+  - `ticktick_guide(intent="reorganize_projects")`
+  - `ticktick_guide(intent="clean_up_tasks")`
+
 ## Package Layout
 
 ```text
@@ -180,7 +193,7 @@ git clone https://github.com/kpihx/k-tick-mcp.git
 cd k-tick-mcp
 uv sync --group dev
 
-# Unit tests (153 selected unit tests, no network)
+# Unit tests (155 selected unit tests, no network)
 uv run pytest
 
 # Live tests against real TickTick API (requires tokens in .env)
@@ -189,7 +202,7 @@ uv run pytest -m live
 
 ### Test suite
 
-- **153 selected unit tests** — pure logic, mocked HTTP, zero network
+- **155 selected unit tests** — pure logic, mocked HTTP, zero network
 - **12 live integration scripts** — 508 assertions against the real TickTick API
 
 ## License

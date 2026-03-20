@@ -167,6 +167,43 @@ COMMON_WORKFLOWS = [
     },
 ]
 
+INTENT_GUIDE = {
+    "know_what_to_do_today": {
+        "description": "Get an actionable view of today's work, events, and carry-over.",
+        "tools": ["tasks_of_today", "events_of_today", "overdue_tasks", "priority_dashboard"],
+    },
+    "plan_the_week": {
+        "description": "Build a weekly planning view with timed events, due tasks, and overdue carry-over.",
+        "tools": ["week_overview", "week_agenda", "upcoming_tasks", "save_query_preset", "run_query_preset"],
+    },
+    "find_a_note": {
+        "description": "Search notes precisely with folder/project scoping and grep-like filters.",
+        "tools": ["query_notes", "workspace_map", "query_projects", "query_folders", "save_query_preset"],
+    },
+    "find_tasks_precisely": {
+        "description": "Filter tasks by project, tag, date range, regex, reminder state, recurrence, or hierarchy.",
+        "tools": ["query_tasks", "query_agenda", "query_task_history", "list_query_presets", "run_query_preset"],
+    },
+    "reorganize_projects": {
+        "description": "Inspect workspace structure, create/move projects safely, and verify folder placement.",
+        "tools": ["workspace_map", "query_projects", "verified_create_project", "verified_assign_project_folder"],
+    },
+    "clean_up_tasks": {
+        "description": "Surface stale, overdue, low-signal, or historical tasks before deciding what to archive or move.",
+        "tools": ["stale_tasks", "overdue_tasks", "query_task_history", "priority_dashboard", "query_tasks"],
+    },
+    "perform_safe_structural_changes": {
+        "description": "Use verified wrappers for known TickTick silent-failure zones such as subtasks, moves, and folder assignment.",
+        "tools": [
+            "create_subtask",
+            "verified_set_subtask_parent",
+            "verified_move_tasks",
+            "verified_batch_move",
+            "verified_assign_project_folder",
+        ],
+    },
+}
+
 
 def _err(e) -> dict:
     if isinstance(e, TickTickAPIError):
@@ -273,6 +310,7 @@ __all__ = [
     "mcp",
     "TOOL_CATALOG",
     "COMMON_WORKFLOWS",
+    "INTENT_GUIDE",
     "_err",
     "_task_dict",
     "_model_list",

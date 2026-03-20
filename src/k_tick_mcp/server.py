@@ -11,6 +11,7 @@ from .mcp_api.core import (
     mcp,
     TOOL_CATALOG,
     COMMON_WORKFLOWS,
+    INTENT_GUIDE,
     _err,
     _task_dict,
 )
@@ -59,6 +60,7 @@ __all__ = [
     'mcp',
     'TOOL_CATALOG',
     'COMMON_WORKFLOWS',
+    'INTENT_GUIDE',
     '_err',
     '_task_dict',
     'ticktick_guide',

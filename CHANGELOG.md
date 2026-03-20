@@ -14,6 +14,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Operational dashboards/views** — `week_agenda`, `upcoming_tasks`, and `priority_dashboard` for common planning and triage flows.
 - **Planning overview** — `week_overview` separates timed events, due tasks, and overdue tasks into a single planning-oriented response.
 - **Saved query presets** — `list_query_presets`, `save_query_preset`, `run_query_preset`, and `delete_query_preset` persist reusable filters locally.
+- **Intent-first guide paths** — `ticktick_guide(intent=...)` now exposes goal-oriented entry points such as "know what to do today", "plan the week", and "reorganize projects".
 - **Verified project/move helpers** — `verified_create_project` and `verified_batch_move` add project existence checks and rollback hints for failed move verification.
 - **Verified structural actions** — `create_subtask`, `verified_set_subtask_parent`, `verified_move_tasks`, and `verified_assign_project_folder`.
 - **Structured filters** — folder/project scope, tags, priorities, reminders, recurrence, checklist presence, hierarchy shape, and project kind filters.
@@ -21,6 +22,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Grep-like matching** — substring search, `any` / `all` / `phrase` keyword modes, regex, and exclusion regex across selected fields.
 - **Targeted source planning** — the query layer uses scoped `project/{id}/data` reads when filters narrow the search space, instead of defaulting to a full sync.
 - **Unit coverage for the query layer** — focused tests for range filters, regex search, note scoping, agenda windows, workspace mapping, and task history.
+- **Catalog parity test** — server tests now assert `TOOL_CATALOG == public exports == registered FastMCP tools`.
 
 ### Changed
 
