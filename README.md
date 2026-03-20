@@ -180,15 +180,17 @@ local stdio
 Deployment artifacts are bundled in the repo:
 
 - `Dockerfile`
-- `docker-compose.yml`
-- `docker-compose.override.example.yml`
+- `deploy/docker-compose.yml`
+- `deploy/docker-compose.override.example.yml`
+- `deploy/.env.example`
 - `.dockerignore`
 - `.gitlab-ci.yml`
 
 Typical local dry-run:
 
 ```bash
-cp src/tick_mcp/.env.example .env
+cd deploy
+cp .env.example .env
 docker compose config -q
 docker compose up --build
 ```
@@ -196,6 +198,7 @@ docker compose up --build
 Typical SSH-side admin once deployed on the server:
 
 ```bash
+cd deploy
 docker compose exec -T tick-mcp tick-admin status
 docker compose logs --tail=100 tick-mcp
 curl -fsS http://127.0.0.1:8091/health

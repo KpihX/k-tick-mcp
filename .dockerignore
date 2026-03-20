@@ -13,4 +13,5 @@ dist/
 *.egg-info/
 logs/
 src/tick_mcp/.env
+deploy/.env
 tests/

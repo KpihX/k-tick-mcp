@@ -11,7 +11,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Streamable HTTP transport** — `tick-mcp serve-http` now exposes the same MCP surface over HTTP for homelab deployment.
 - **HTTP operator surface** — `/health` and `/admin/status` added alongside `/mcp`.
-- **Homelab deployment bundle** — `Dockerfile`, `docker-compose.yml`, `docker-compose.override.example.yml`, `.dockerignore`, and `.gitlab-ci.yml`.
+- **Homelab deployment bundle** — `Dockerfile`, `deploy/docker-compose.yml`, `deploy/docker-compose.override.example.yml`, `deploy/.env.example`, `.dockerignore`, and `.gitlab-ci.yml`.
 - **Deployment env template** — `src/tick_mcp/.env.example` now covers HTTP settings and `TELEGRAM_TICK_HOMELAB_TOKEN`.
 - **Query / Search layer** — `workspace_map`, `query_projects`, `query_folders`, `query_tasks`, `query_notes`, `query_agenda`, and `query_task_history`.
 - **Ready-made read views** — `tasks_of_today`, `events_of_today`, `overdue_tasks`, and `stale_tasks`.

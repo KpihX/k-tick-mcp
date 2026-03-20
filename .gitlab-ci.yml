@@ -35,6 +35,7 @@ deploy_homelab:
     - validate_project
   script:
     - echo "🚀 Deploying tick-mcp to the homelab..."
+    - cd deploy
     - echo "TICKTICK_API_TOKEN=$TICKTICK_API_TOKEN" > .env
     - echo "TICKTICK_SESSION_TOKEN=$TICKTICK_SESSION_TOKEN" >> .env
     - echo "TICKTICK_USERNAME=$TICKTICK_USERNAME" >> .env

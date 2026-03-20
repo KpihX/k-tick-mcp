@@ -1,7 +1,7 @@
 services:
   tick-mcp:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: tick-mcp
     restart: unless-stopped
