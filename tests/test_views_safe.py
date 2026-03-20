@@ -42,6 +42,58 @@ class TestReadViews:
         assert captured["time_from"] == "09:00"
         assert captured["time_to"] == "12:00"
 
+    def test_week_agenda_builds_multi_day_window(self, monkeypatch):
+        captured = {}
+
+        def fake_query_agenda(**kwargs):
+            captured.update(kwargs)
+            return {"count": 0, "items": []}
+
+        monkeypatch.setattr(read, "query_agenda", fake_query_agenda)
+        read.week_agenda(local_date="2026-03-20", days=7, project_names=["Agenda"])
+
+        assert captured["from_dt"].startswith("2026-03-20T00:00:00")
+        assert captured["to_dt"].startswith("2026-03-26T23:59:59")
+        assert captured["project_names"] == ["Agenda"]
+
+    def test_upcoming_tasks_delegates_to_query_tasks(self, monkeypatch):
+        captured = {}
+
+        def fake_query_tasks(**kwargs):
+            captured.update(kwargs)
+            return {"count": 0, "items": []}
+
+        monkeypatch.setattr(read, "query_tasks", fake_query_tasks)
+        read.upcoming_tasks(local_date="2026-03-20", days=5, min_priority=3)
+
+        assert captured["due_from"].startswith("2026-03-20T00:00:00")
+        assert captured["due_to"].startswith("2026-03-24T23:59:59")
+        assert captured["min_priority"] == 3
+
+    def test_priority_dashboard_groups_items(self, monkeypatch):
+        monkeypatch.setattr(
+            read,
+            "query_tasks",
+            lambda **kwargs: {
+                "count": 4,
+                "plan": {"source": "all_active_tasks"},
+                "items": [
+                    {"id": "a", "priority_label": "high"},
+                    {"id": "b", "priority_label": "high"},
+                    {"id": "c", "priority_label": "medium"},
+                    {"id": "d", "priority_label": "none"},
+                ],
+            },
+        )
+
+        result = read.priority_dashboard(project_names=["Alpha"])
+
+        assert result["count"] == 4
+        assert result["buckets"]["high"]["count"] == 2
+        assert result["buckets"]["medium"]["count"] == 1
+        assert result["buckets"]["none"]["count"] == 1
+        assert result["scope"]["project_names"] == ["Alpha"]
+
 
 @pytest.mark.unit
 class TestVerifiedActions:

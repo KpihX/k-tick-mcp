@@ -34,8 +34,11 @@ from .mcp_api.read import (
     query_agenda,
     tasks_of_today,
     events_of_today,
+    week_agenda,
+    upcoming_tasks,
     overdue_tasks,
     stale_tasks,
+    priority_dashboard,
     query_task_history,
 )
 from .mcp_api.verified import (
@@ -105,8 +108,11 @@ __all__ = [
     'query_agenda',
     'tasks_of_today',
     'events_of_today',
+    'week_agenda',
+    'upcoming_tasks',
     'overdue_tasks',
     'stale_tasks',
+    'priority_dashboard',
     'query_task_history',
     'create_subtask',
     'verified_set_subtask_parent',

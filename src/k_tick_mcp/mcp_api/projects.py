@@ -170,7 +170,7 @@ def update_project(
         if group_id is not None:
             # V1 silently ignores groupId — use V2 batch/project with read-modify-write.
             # Fetch current raw state so no existing fields (name, color, …) are wiped.
-            current_raw = client._v1_get(f"/project/{project_id}")
+            current_raw = client.get_project_raw(project_id)
             v2_item: dict = {k: v for k, v in current_raw.items() if v is not None}
             v2_item["id"] = project_id
             v2_item["groupId"] = group_id
@@ -180,7 +180,7 @@ def update_project(
             if errors:
                 return {"error": True, "status_code": 0, "message": str(errors)}
             # Re-fetch raw and return (V1 shape — groupId will show null, expected)
-            return client._v1_get(f"/project/{project_id}")
+            return client.get_project_raw(project_id)
 
         return client.update_project(project_id, payload).model_dump(exclude_none=False)
     except TickTickAPIError as e:

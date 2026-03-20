@@ -11,6 +11,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Query / Search layer** — `workspace_map`, `query_projects`, `query_folders`, `query_tasks`, `query_notes`, `query_agenda`, and `query_task_history`.
 - **Ready-made read views** — `tasks_of_today`, `events_of_today`, `overdue_tasks`, and `stale_tasks`.
+- **Operational dashboards/views** — `week_agenda`, `upcoming_tasks`, and `priority_dashboard` for common planning and triage flows.
 - **Verified structural actions** — `create_subtask`, `verified_set_subtask_parent`, `verified_move_tasks`, and `verified_assign_project_folder`.
 - **Structured filters** — folder/project scope, tags, priorities, reminders, recurrence, checklist presence, hierarchy shape, and project kind filters.
 - **Range-aware agenda access** — date ranges, datetime windows, and HH:MM time windows for scheduled items.
@@ -21,6 +22,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - **Server organization** — shared MCP state/helpers now live in `mcp_api/core.py`, with read/query tools isolated in `mcp_api/read.py`, verified workflow helpers in `mcp_api/verified.py`, and reusable filters/planning in `services/query.py`.
+- **Client organization** — the former monolithic `client.py` is now a stable facade over `client_api/transport.py`, `projects.py`, `tasks.py`, `habits.py`, and `stats.py`.
 
 ## [0.1.0] — 2025-07-13
 

@@ -167,7 +167,7 @@ def update_habit(
     try:
         # Read current state — V2 /habits/batch replaces the entire object,
         # so we must fetch first to avoid wiping all unprovided fields.
-        all_habits: list = client._v2_get("/habits")
+        all_habits = client.get_habits_raw()
         current = next((h for h in all_habits if h.get("id") == habit_id), None)
         if current is None:
             return {"error": True, "status_code": 404, "message": f"Habit {habit_id} not found."}

@@ -22,6 +22,19 @@ def _local_day_bounds(raw_date: Optional[str]) -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
+def _local_range_bounds(raw_date: Optional[str], days: int) -> tuple[str, str]:
+    if days < 1:
+        raise ValueError("days must be >= 1.")
+    if raw_date:
+        start_day = datetime.fromisoformat(raw_date).date()
+    else:
+        start_day = datetime.now().astimezone().date()
+    end_day = start_day + timedelta(days=days - 1)
+    start = datetime.combine(start_day, datetime.min.time())
+    end = datetime.combine(end_day, datetime.max.time()).replace(microsecond=0)
+    return start.isoformat(), end.isoformat()
+
+
 @mcp.tool()
 def workspace_map(
     include_closed: bool = False,
@@ -384,6 +397,85 @@ def events_of_today(
 
 
 @mcp.tool()
+def week_agenda(
+    local_date: Optional[str] = None,
+    days: int = 7,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    timed_only: bool = False,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
+    limit: int = 100,
+) -> dict:
+    """
+    Return scheduled items for a local multi-day window (default: 7 days).
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_agenda, tasks_of_today, events_of_today]
+    """
+    start, end = _local_range_bounds(local_date, days)
+    return query_agenda(
+        from_dt=start,
+        to_dt=end,
+        date_field="scheduled",
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        timed_only=timed_only,
+        time_from=time_from,
+        time_to=time_to,
+        limit=limit,
+        sort_by="dueDate",
+        descending=False,
+    )
+
+
+@mcp.tool()
+def upcoming_tasks(
+    local_date: Optional[str] = None,
+    days: int = 7,
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    min_priority: Optional[int] = None,
+    priorities: Optional[list[int]] = None,
+    limit: int = 100,
+) -> dict:
+    """
+    Return active tasks due within a local upcoming window.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_tasks, week_agenda, overdue_tasks]
+    """
+    due_from, due_to = _local_range_bounds(local_date, days)
+    return query_tasks(
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        due_from=due_from,
+        due_to=due_to,
+        min_priority=min_priority,
+        priorities=priorities,
+        limit=limit,
+        sort_by="dueDate",
+        descending=False,
+    )
+
+
+@mcp.tool()
 def overdue_tasks(
     before_dt: Optional[str] = None,
     project_ids: Optional[list[str]] = None,
@@ -445,6 +537,65 @@ def stale_tasks(
         sort_by="modifiedTime",
         descending=False,
     )
+
+
+@mcp.tool()
+def priority_dashboard(
+    project_ids: Optional[list[str]] = None,
+    project_names: Optional[list[str]] = None,
+    folder_ids: Optional[list[str]] = None,
+    folder_names: Optional[list[str]] = None,
+    tags: Optional[list[str]] = None,
+    text_query: Optional[str] = None,
+    limit: int = 100,
+) -> dict:
+    """
+    Summarize active tasks by priority with top items per bucket.
+
+    [Category: Query & Search]  [Auth: V1 + V2]
+    [Related: query_tasks, tasks_of_today, overdue_tasks]
+    """
+    result = query_tasks(
+        project_ids=project_ids,
+        project_names=project_names,
+        folder_ids=folder_ids,
+        folder_names=folder_names,
+        tags=tags,
+        text_query=text_query,
+        limit=limit,
+        sort_by="priority",
+        descending=True,
+    )
+    if result.get("error"):
+        return result
+
+    buckets: dict[str, dict[str, object]] = {
+        "high": {"count": 0, "items": []},
+        "medium": {"count": 0, "items": []},
+        "low": {"count": 0, "items": []},
+        "none": {"count": 0, "items": []},
+    }
+    for item in result["items"]:
+        label = str(item.get("priority_label", "none"))
+        bucket = buckets.setdefault(label, {"count": 0, "items": []})
+        bucket["count"] = int(bucket["count"]) + 1
+        items = bucket["items"]
+        if isinstance(items, list) and len(items) < 5:
+            items.append(item)
+
+    return {
+        "scope": {
+            "project_ids": project_ids,
+            "project_names": project_names,
+            "folder_ids": folder_ids,
+            "folder_names": folder_names,
+            "tags": tags,
+            "text_query": text_query,
+        },
+        "count": result["count"],
+        "plan": result.get("plan"),
+        "buckets": buckets,
+    }
 
 
 @mcp.tool()
