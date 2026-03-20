@@ -10,7 +10,7 @@ import sys, os, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary, INFO, RESET
 
-from k_tick_mcp.server import (
+from ticktick_mcp.server import (
     create_project, update_project, delete_project, get_project_detail,
     list_projects, get_project_tasks, get_inbox, get_all_tasks,
     create_task, update_task, delete_task,
@@ -160,7 +160,7 @@ if pA_id and len(batch_ids) >= 3:
     inbox_tasks = get_inbox()
     inbox_id = ""
     # Derive inboxId from an inbox task, or use full_sync
-    from k_tick_mcp.server import full_sync
+    from ticktick_mcp.server import full_sync
     sync = full_sync()
     if sync and isinstance(sync, dict):
         inbox_id = sync.get("inboxId", "")

@@ -8,7 +8,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 from _helper import _header, check, assert_result, show_sample, summary
 
-from k_tick_mcp.server import (
+from ticktick_mcp.server import (
     ticktick_guide, check_v2_availability,
     build_recurrence_rule, build_reminder,
     full_sync, get_all_tasks, get_user_status, get_productivity_stats,

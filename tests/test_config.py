@@ -1,5 +1,5 @@
 """
-Tests for k_tick_mcp.config — 2-tier secrets resolver, bw-env integration.
+Tests for ticktick_mcp.config — 2-tier secrets resolver, bw-env integration.
 
 Markers:
   @unit        — mocked, no I/O.
@@ -15,8 +15,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-import k_tick_mcp.config as config_mod
-from k_tick_mcp.config import (
+import ticktick_mcp.config as config_mod
+from ticktick_mcp.config import (
     load_config,
     _bwenv_available,
     _shell_read_env,

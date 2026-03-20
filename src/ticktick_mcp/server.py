@@ -3,7 +3,7 @@ TickTick MCP public server surface.
 
 This module keeps the stable import location used by the CLI entrypoint and by
 existing tests, while the actual tool groups live in dedicated modules under
-`k_tick_mcp.mcp_api`.
+`ticktick_mcp.mcp_api`.
 """
 from __future__ import annotations
 

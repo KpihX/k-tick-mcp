@@ -1,5 +1,5 @@
 """
-Tests for k_tick_mcp.server — MCP tool registration & catalog.
+Tests for ticktick_mcp.server — MCP tool registration & catalog.
 
 All tests here are @unit — they verify static structure, not API calls.
 """
@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import pytest
 
-from k_tick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, __all__, _err, _task_dict
-from k_tick_mcp.mcp_api.utilities import ticktick_guide
-from k_tick_mcp.models import TickTickAPIError, Task, Priority, TaskStatus
+from ticktick_mcp.server import mcp, TOOL_CATALOG, COMMON_WORKFLOWS, __all__, _err, _task_dict
+from ticktick_mcp.mcp_api.utilities import ticktick_guide
+from ticktick_mcp.models import TickTickAPIError, Task, Priority, TaskStatus
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -122,7 +122,7 @@ class TestHelpers:
         assert d["title"] == "Test"
 
     def test_task_dict_with_checklist(self):
-        from k_tick_mcp.models import ChecklistItem
+        from ticktick_mcp.models import ChecklistItem
         t = Task(
             title="Shopping",
             items=[

@@ -8,9 +8,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from k_tick_mcp.mcp_api import read, verified
-from k_tick_mcp import server as server_mod
-from k_tick_mcp.models import Project, ProjectData, Task
+from ticktick_mcp.mcp_api import read, verified
+from ticktick_mcp import server as server_mod
+from ticktick_mcp.models import Project, ProjectData, Task
 
 
 @pytest.mark.unit

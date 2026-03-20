@@ -1,7 +1,7 @@
-# k-tick-mcp
+# ticktick-mcp
 
-[![PyPI](https://img.shields.io/pypi/v/k-tick-mcp)](https://pypi.org/project/k-tick-mcp/)
-[![Python](https://img.shields.io/pypi/pyversions/k-tick-mcp)](https://pypi.org/project/k-tick-mcp/)
+[![PyPI](https://img.shields.io/pypi/v/ticktick_mcp)](https://pypi.org/project/ticktick_mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/ticktick_mcp)](https://pypi.org/project/ticktick_mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **MCP server for TickTick** — manage tasks, projects, habits, tags, focus stats, and more through the [Model Context Protocol](https://modelcontextprotocol.io/).
@@ -62,7 +62,7 @@
 ## Package Layout
 
 ```text
-src/k_tick_mcp/
+src/ticktick_mcp/
 ├── mcp_api/
 │   ├── core.py          # shared FastMCP instance, catalog, helpers
 │   ├── utilities.py     # discovery + helper tools
@@ -95,10 +95,10 @@ src/k_tick_mcp/
 
 ```bash
 # recommended — installs as a standalone tool
-uv tool install k-tick-mcp
+uv tool install ticktick_mcp
 
 # or via pip
-pip install k-tick-mcp
+pip install ticktick_mcp
 ```
 
 This provides two commands:
@@ -115,7 +115,7 @@ This provides two commands:
 Copy the example file and fill in your tokens:
 
 ```bash
-cp src/k_tick_mcp/.env.example src/k_tick_mcp/.env
+cp src/ticktick_mcp/.env.example src/ticktick_mcp/.env
 ```
 
 | Variable | Required | Description |
@@ -141,7 +141,7 @@ ticktick-admin session refresh
 
 ### 2. Server config
 
-Runtime settings live in `src/k_tick_mcp/config.yaml` — API endpoints, timeouts, and user-agent are all externalised there.
+Runtime settings live in `src/ticktick_mcp/config.yaml` — API endpoints, timeouts, and user-agent are all externalised there.
 
 ## MCP Client Integration
 
@@ -189,8 +189,8 @@ Any client that supports the stdio transport can launch `ticktick-mcp` as a subp
 
 ```bash
 # Clone & install dev deps
-git clone https://github.com/kpihx/k-tick-mcp.git
-cd k-tick-mcp
+git clone https://github.com/kpihx/ticktick-mcp.git
+cd ticktick-mcp
 uv sync --group dev
 
 # Unit tests (155 selected unit tests, no network)

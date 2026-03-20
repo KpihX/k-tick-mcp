@@ -1,7 +1,7 @@
 """
 ticktick-admin — Admin CLI for the TickTick MCP server.
 
-Manage credentials stored in .env (src/k_tick_mcp/.env) without going through
+Manage credentials stored in .env (src/ticktick_mcp/.env) without going through
 the LLM. All writes go through python-dotenv's set_key(), which safely creates
 or updates a single line without touching the rest of the file.
 

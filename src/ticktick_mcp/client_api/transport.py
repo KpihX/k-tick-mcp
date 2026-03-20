@@ -24,7 +24,7 @@ _v2_session_token: str | None = None
 
 
 def _client_override(name: str, default: object) -> object:
-    facade = sys.modules.get("k_tick_mcp.client")
+    facade = sys.modules.get("ticktick_mcp.client")
     if facade is None:
         return default
     return getattr(facade, name, default)
@@ -33,7 +33,7 @@ def _client_override(name: str, default: object) -> object:
 def _set_cached_token(token: str | None) -> None:
     global _v2_session_token
     _v2_session_token = token
-    facade = sys.modules.get("k_tick_mcp.client")
+    facade = sys.modules.get("ticktick_mcp.client")
     if facade is not None:
         setattr(facade, "_v2_session_token", token)
 
@@ -193,7 +193,7 @@ def _handle(r: httpx.Response) -> dict | list:
             f"V1 API token expired or invalid ({ENV_API_TOKEN}).\n"
             "Fix: run  ticktick-admin token set <new_token>  in your terminal,\n"
             "  or copy the token from TickTick → Settings → Integrations → API\n"
-            "  and set it in src/k_tick_mcp/.env."
+            "  and set it in src/ticktick_mcp/.env."
         )
     if r.status_code == 403:
         raise TickTickAPIError(403, "Forbidden — insufficient permissions for this resource.")

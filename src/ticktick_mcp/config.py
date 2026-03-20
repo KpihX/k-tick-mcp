@@ -57,7 +57,7 @@ CONFIG_PATH = _PACKAGE_DIR / "config.yaml"
 _DOTENV_PATH = _PACKAGE_DIR / ".env"
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
-_log = logging.getLogger("k_tick_mcp.config")
+_log = logging.getLogger("ticktick_mcp.config")
 
 # ─── .env loading ─────────────────────────────────────────────────────────────
 # override=True: values from .env overwrite any already-set os.environ entries.
