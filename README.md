@@ -180,7 +180,7 @@ git clone https://github.com/kpihx/k-tick-mcp.git
 cd k-tick-mcp
 uv sync --group dev
 
-# Unit tests (156 tests, no network)
+# Unit tests (153 selected unit tests, no network)
 uv run pytest
 
 # Live tests against real TickTick API (requires tokens in .env)
@@ -189,7 +189,7 @@ uv run pytest -m live
 
 ### Test suite
 
-- **156 unit tests** — pure logic, mocked HTTP, zero network
+- **153 selected unit tests** — pure logic, mocked HTTP, zero network
 - **12 live integration scripts** — 508 assertions against the real TickTick API
 
 ## License
