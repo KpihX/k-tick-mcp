@@ -29,7 +29,7 @@ from .service import (
 from ..config import TELEGRAM_CHAT_IDS, TELEGRAM_TICK_HOMELAB_TOKEN
 
 
-_log = logging.getLogger("tick_mcp.telegram_admin")
+_log = logging.getLogger("tick_mcp.admin.telegram")
 _poller_started = False
 _restart_callback: Callable[[], None] | None = None
 _poller_thread: threading.Thread | None = None

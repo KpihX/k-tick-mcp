@@ -372,6 +372,7 @@ def admin_help_text() -> str:
             "  - GET /admin/status",
             "  - GET /admin/help",
             "- Telegram:",
+            "  - /start",
             "  - /help",
             "  - /status",
             "  - /health",

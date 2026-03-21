@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Admin help unified** — one shared capability summary now feeds CLI (`tick-admin guide`), HTTP (`/admin/help`), and Telegram (`/help`).
 - **Telegram poller diagnostics hardened** — `/admin/status` now exposes live Telegram admin runtime state, and the poll loop records the last poll, last update, last command, and last error.
 - **Telegram poller bootstrap fixed** — the HTTP entrypoint now starts the Telegram admin thread explicitly before serving, instead of depending only on the app startup hook.
+- **Telegram admin verified live** — `/start`, `/help`, `/status`, and `/health` now reply correctly from the deployed bot, and `/admin/status` confirms a live poller thread in production.
+- **Admin log surface aligned** — Telegram admin now logs into the shared admin log stream, so `/logs` can reflect both CLI/admin actions and Telegram command handling.
+- **Telegram help clarified** — `/start` is now listed explicitly alongside `/help` in the shared admin capability summary.
 
 ## [0.2.0] — 2026-03-20
 
