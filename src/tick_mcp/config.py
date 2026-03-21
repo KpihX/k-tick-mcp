@@ -55,16 +55,10 @@ from dotenv import load_dotenv
 # ─── Paths ────────────────────────────────────────────────────────────────────
 _PACKAGE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = _PACKAGE_DIR / "config.yaml"
-_DOTENV_PATH = _PACKAGE_DIR / ".env"
+_DEFAULT_DOTENV_PATH = _PACKAGE_DIR / ".env"
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 _log = logging.getLogger("tick_mcp.config")
-
-# ─── .env loading ─────────────────────────────────────────────────────────────
-# override=True: values from .env overwrite any already-set os.environ entries.
-# If .env doesn't exist this is a no-op, falling back to plain os.environ.
-load_dotenv(_DOTENV_PATH, override=True)
-
 
 @lru_cache(maxsize=1)
 def load_config(config_path=CONFIG_PATH) -> dict:
@@ -157,10 +151,24 @@ ENV_HTTP_PORT: str = _env_vars.get("http_port", "TICK_MCP_HTTP_PORT")
 ENV_HTTP_MCP_PATH: str = _env_vars.get("http_mcp_path", "TICK_MCP_HTTP_MCP_PATH")
 ENV_PUBLIC_BASE_URL: str = _env_vars.get("public_base_url", "TICK_MCP_PUBLIC_BASE_URL")
 ENV_FALLBACK_BASE_URL: str = _env_vars.get("fallback_base_url", "TICK_MCP_FALLBACK_BASE_URL")
+ENV_ADMIN_ENV_FILE: str = _env_vars.get("admin_env_file", "TICK_MCP_ADMIN_ENV_FILE")
 ENV_TELEGRAM_TICK_HOMELAB_TOKEN: str = _env_vars.get(
     "telegram_tick_homelab_token",
     "TELEGRAM_TICK_HOMELAB_TOKEN",
 )
+ENV_TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS: str = _env_vars.get(
+    "telegram_tick_homelab_allowed_chat_ids",
+    "TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS",
+)
+
+_DOTENV_PATH = Path(
+    os.environ.get(ENV_ADMIN_ENV_FILE, str(_DEFAULT_DOTENV_PATH))
+).expanduser()
+
+# ─── .env loading ─────────────────────────────────────────────────────────────
+# override=True: values from .env overwrite any already-set os.environ entries.
+# If .env doesn't exist this is a no-op, falling back to plain os.environ.
+load_dotenv(_DOTENV_PATH, override=True)
 
 HTTP_HOST: str = _read_env_override(ENV_HTTP_HOST, str(_server_http.get("host", "127.0.0.1")))
 HTTP_PORT: int = int(_read_env_override(ENV_HTTP_PORT, str(_server_http.get("port", 8091))))
@@ -173,7 +181,17 @@ HTTP_FALLBACK_BASE_URL: str = _read_env_override(
     ENV_FALLBACK_BASE_URL,
     str(_server_http.get("fallback_base_url", "https://tick.homelab")),
 )
+ADMIN_ENV_PATH: Path = _DOTENV_PATH
 TELEGRAM_TICK_HOMELAB_TOKEN: str | None = os.environ.get(ENV_TELEGRAM_TICK_HOMELAB_TOKEN)
+TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS_RAW: str = os.environ.get(
+    ENV_TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS,
+    "",
+)
+TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS: tuple[str, ...] = tuple(
+    chat_id.strip()
+    for chat_id in TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS_RAW.split(",")
+    if chat_id.strip()
+)
 
 # ─── Secrets manager fallback (bw-env) ───────────────────────────────────────
 _secrets_cfg = _config.get("secrets", {})

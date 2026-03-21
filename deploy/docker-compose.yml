@@ -8,6 +8,8 @@ services:
     env_file:
       - path: .env
         required: false
+    volumes:
+      - tick_mcp_data:/data
     networks:
       - proxy
     healthcheck:
@@ -35,3 +37,6 @@ services:
 networks:
   proxy:
     external: true
+
+volumes:
+  tick_mcp_data:

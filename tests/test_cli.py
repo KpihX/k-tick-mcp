@@ -5,6 +5,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+import tick_mcp.admin_service as admin_service
 import tick_mcp.cli as cli
 
 
@@ -28,7 +29,9 @@ def test_status_shows_session_remaining_time(monkeypatch, tmp_path: Path) -> Non
         encoding="utf-8",
     )
     monkeypatch.setattr(cli, "_DOTENV_PATH", dotenv_path)
+    monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", dotenv_path)
     monkeypatch.setattr(cli, "_now_utc", lambda: now)
+    monkeypatch.setattr(admin_service, "_now_utc", lambda: now)
 
     result = runner.invoke(cli.app, ["status"])
 
@@ -44,6 +47,7 @@ def test_status_shows_session_remaining_time(monkeypatch, tmp_path: Path) -> Non
 def test_token_set_can_store_optional_expiration(monkeypatch, tmp_path: Path) -> None:
     dotenv_path = tmp_path / ".env"
     monkeypatch.setattr(cli, "_DOTENV_PATH", dotenv_path)
+    monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", dotenv_path)
 
     result = runner.invoke(
         cli.app,
@@ -66,7 +70,9 @@ def test_session_set_can_store_ttl_metadata(monkeypatch, tmp_path: Path) -> None
     dotenv_path = tmp_path / ".env"
     now = datetime(2026, 3, 20, 12, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(cli, "_DOTENV_PATH", dotenv_path)
+    monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", dotenv_path)
     monkeypatch.setattr(cli, "_now_utc", lambda: now)
+    monkeypatch.setattr(admin_service, "_now_utc", lambda: now)
 
     result = runner.invoke(
         cli.app,
@@ -84,7 +90,9 @@ def test_session_refresh_writes_token_and_approximate_expiration(monkeypatch, tm
     dotenv_path = tmp_path / ".env"
     now = datetime(2026, 3, 20, 12, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(cli, "_DOTENV_PATH", dotenv_path)
+    monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", dotenv_path)
     monkeypatch.setattr(cli, "_now_utc", lambda: now)
+    monkeypatch.setattr(admin_service, "_now_utc", lambda: now)
     monkeypatch.setattr(cli, "_v2_login", lambda username, password: "fresh_session_token")
     monkeypatch.setattr(cli.typer, "prompt", lambda *_args, **_kwargs: "secret-password")
 

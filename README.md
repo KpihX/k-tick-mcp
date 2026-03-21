@@ -123,7 +123,11 @@ cp src/tick_mcp/.env.example src/tick_mcp/.env
 |---|---|---|
 | `TICKTICK_API_TOKEN` | **Yes** | V1 Open API bearer token (PAT or OAuth2) |
 | `TICKTICK_SESSION_TOKEN` | No | V2 session cookie for extended features |
-| `TELEGRAM_TICK_HOMELAB_TOKEN` | No | Reserved for the future homelab Telegram admin bridge |
+| `TICKTICK_USERNAME` | No | TickTick login email, used by non-interactive session refresh flows |
+| `TICKTICK_PASSWORD` | No | TickTick password, used by non-interactive session refresh flows |
+| `TICK_MCP_ADMIN_ENV_FILE` | No | Persistent admin env file path. In Docker, use `/data/tick-admin.env`. |
+| `TELEGRAM_TICK_HOMELAB_TOKEN` | No | Telegram bot token for the homelab admin bridge |
+| `TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS` | No | Comma-separated Telegram chat IDs allowed to issue admin commands |
 
 **Getting a V1 token (simplest):**
 
@@ -164,6 +168,7 @@ HTTP defaults:
 - Admin status endpoint: `/admin/status`
 - Primary URL: `https://tick.kpihx-labs.com`
 - Fallback URL: `https://tick.homelab`
+- Telegram admin: auto-started inside the HTTP service when both Telegram env vars are configured
 
 Operational intent:
 
@@ -202,6 +207,62 @@ cd deploy
 docker compose exec -T tick-mcp tick-admin status
 docker compose logs --tail=100 tick-mcp
 curl -fsS http://127.0.0.1:8091/health
+```
+
+Persistent admin state inside Docker:
+
+```text
+/data/tick-admin.env
+-> mounted as a named Docker volume
+-> used by tick-admin and the Telegram bridge
+-> survives container restarts and rebuilds
+```
+
+Telegram commands currently supported:
+
+```text
+/status
+/health
+/urls
+/logs [lines]
+/api_token_set <token> [expires_at_iso]
+/session_set <token> [ttl_days]
+/session_refresh
+/restart
+```
+
+Notes:
+- `/session_refresh` uses `TICKTICK_USERNAME` + `TICKTICK_PASSWORD` from the admin env file.
+- If TickTick requires MFA code entry or an email-link approval, Telegram will refuse and tell you to use `tick-admin session refresh` over SSH.
+- `/restart` exits the live HTTP process; Docker restarts it automatically because the service runs with `restart: unless-stopped`.
+
+### 5. GitLab deployment prerequisites
+
+For a push on `main` to deploy successfully, the GitLab project must have:
+
+- a runner tagged `homelab`
+- the CI variables:
+  - `TICKTICK_API_TOKEN`
+  - `TICKTICK_SESSION_TOKEN`
+  - `TICKTICK_USERNAME`
+  - `TICKTICK_PASSWORD`
+  - `TELEGRAM_TICK_HOMELAB_TOKEN`
+  - `TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS`
+  - `GITHUB_TOKEN`
+
+Pipeline behavior:
+
+```text
+validate
+-> unit tests + import smoke tests
+
+deploy_homelab
+-> writes deploy/.env
+-> docker compose up -d --build
+-> probes /health locally on the docker host
+
+sync_github
+-> mirrors main to github.com/kpihx-labs/tick-mcp
 ```
 
 ## MCP Client Integration
@@ -261,7 +322,7 @@ git clone https://github.com/kpihx/tick-mcp.git
 cd tick-mcp
 uv sync --group dev
 
-# Unit tests (155 selected unit tests, no network)
+# Unit tests (170 selected unit tests, no network)
 uv run pytest
 
 # Live tests against real TickTick API (requires tokens in .env)
@@ -270,7 +331,7 @@ uv run pytest -m live
 
 ### Test suite
 
-- **155 selected unit tests** — pure logic, mocked HTTP, zero network
+- **170 selected unit tests** — pure logic, mocked HTTP, zero network
 - **12 live integration scripts** — 508 assertions against the real TickTick API
 
 ## License

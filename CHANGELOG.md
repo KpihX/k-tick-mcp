@@ -12,7 +12,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Streamable HTTP transport** — `tick-mcp serve-http` now exposes the same MCP surface over HTTP for homelab deployment.
 - **HTTP operator surface** — `/health` and `/admin/status` added alongside `/mcp`.
 - **Homelab deployment bundle** — `Dockerfile`, `deploy/docker-compose.yml`, `deploy/docker-compose.override.example.yml`, `deploy/.env.example`, `.dockerignore`, and `.gitlab-ci.yml`.
-- **Deployment env template** — `src/tick_mcp/.env.example` now covers HTTP settings and `TELEGRAM_TICK_HOMELAB_TOKEN`.
+- **Deployment env template** — `src/tick_mcp/.env.example` now covers HTTP settings, persistent admin env storage, and Telegram bridge variables.
+- **Shared admin service** — `admin_service.py` now centralizes credential status, token writes, non-interactive session refresh, and admin log access for every admin surface.
+- **Telegram admin bridge** — the HTTP service can now auto-start an in-process Telegram command poller with allowed-chat filtering.
+- **Enterprise mirror sync** — `.gitlab-ci.yml` now mirrors `main` to `github.com/kpihx-labs/tick-mcp` after deployment.
 - **Query / Search layer** — `workspace_map`, `query_projects`, `query_folders`, `query_tasks`, `query_notes`, `query_agenda`, and `query_task_history`.
 - **Ready-made read views** — `tasks_of_today`, `events_of_today`, `overdue_tasks`, and `stale_tasks`.
 - **Operational dashboards/views** — `week_agenda`, `upcoming_tasks`, and `priority_dashboard` for common planning and triage flows.
@@ -32,6 +35,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **FastMCP transport settings** — host, port, and MCP path are now driven by structured config and env overrides.
 - **Dual transport documentation** — README now documents remote HTTP as the primary target and local stdio as the fallback.
+- **Persistent admin state** — Docker deployment now mounts `/data` and stores admin-managed credentials in `/data/tick-admin.env` instead of the ephemeral package directory.
 - **Server organization** — shared MCP state/helpers now live in `mcp_api/core.py`, with read/query tools isolated in `mcp_api/read.py`, verified workflow helpers in `mcp_api/verified.py`, and reusable filters/planning in `services/query.py`.
 - **Client organization** — the former monolithic `client.py` is now a stable facade over `client_api/transport.py`, `projects.py`, `tasks.py`, `habits.py`, and `stats.py`.
 

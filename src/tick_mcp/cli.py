@@ -25,7 +25,17 @@ from dotenv import set_key, dotenv_values
 from rich.console import Console
 from rich.table import Table
 from rich import box
+from .admin_service import (
+    API_EXPIRES_AT_KEY,
+    APPROX_SESSION_TTL,
+    SESSION_EXPIRES_AT_KEY,
+    SESSION_OBTAINED_AT_KEY,
+    get_status_payload,
+    set_api_token as service_set_api_token,
+    set_session_token as service_set_session_token,
+)
 from .config import (
+    ADMIN_ENV_PATH,
     V2_SIGNON_URL, V2_MFA_VERIFY_URL, V2_LOGIN_HEADERS,
     SIGNON_PARAMS, API_TIMEOUT, WEB_ORIGIN,
     ENV_API_TOKEN, ENV_SESSION_TOKEN,
@@ -33,13 +43,9 @@ from .config import (
 
 # ─── Paths ────────────────────────────────────────────────────────────────────────────
 _PACKAGE_DIR = Path(__file__).resolve().parent
-_DOTENV_PATH = _PACKAGE_DIR / ".env"
+_DOTENV_PATH = ADMIN_ENV_PATH
 _LOG_DIR = _PACKAGE_DIR.parent.parent.parent / "logs"   # repo root / logs/
 _LOG_FILE = _LOG_DIR / "ticktick_admin_debug.log"
-_SESSION_OBTAINED_AT_KEY = f"{ENV_SESSION_TOKEN}_OBTAINED_AT"
-_SESSION_EXPIRES_AT_KEY = f"{ENV_SESSION_TOKEN}_EXPIRES_AT"
-_API_EXPIRES_AT_KEY = f"{ENV_API_TOKEN}_EXPIRES_AT"
-_APPROX_SESSION_TTL = timedelta(days=30)
 
 # ─── Debug logger ─────────────────────────────────────────────────────────────────────
 class _FlushingFileHandler(logging.FileHandler):
@@ -486,22 +492,13 @@ def status():
         status_str = "[green]✓ set[/green]" if val else "[red]✗ missing[/red]"
         tbl.add_row(key, status_str, _mask(val), timing if val else "[dim]n/a[/dim]")
 
-    api_expires_at = _parse_epoch(env.get(_API_EXPIRES_AT_KEY))
-    session_obtained_at = _parse_epoch(env.get(_SESSION_OBTAINED_AT_KEY))
-    session_expires_at = _parse_epoch(env.get(_SESSION_EXPIRES_AT_KEY))
+    api_expires_at = _parse_epoch(env.get(API_EXPIRES_AT_KEY))
+    session_obtained_at = _parse_epoch(env.get(SESSION_OBTAINED_AT_KEY))
+    session_expires_at = _parse_epoch(env.get(SESSION_EXPIRES_AT_KEY))
 
-    _row(
-        ENV_API_TOKEN,
-        timing=_timing_summary(expires_at=api_expires_at),
-    )
-    _row(
-        ENV_SESSION_TOKEN,
-        timing=_timing_summary(
-            expires_at=session_expires_at,
-            obtained_at=session_obtained_at,
-            approximate=True,
-        ),
-    )
+    service_status = get_status_payload()
+    _row(ENV_API_TOKEN, timing=service_status.api_timing)
+    _row(ENV_SESSION_TOKEN, timing=service_status.session_timing)
 
     console.print()
     console.print(tbl)
@@ -525,11 +522,10 @@ def token_set(
     """Set the V1 API token in .env (official API)."""
     if not value:
         value = typer.prompt(ENV_API_TOKEN, hide_input=True)
-    _write_env(ENV_API_TOKEN, value.strip())
-    _write_optional_env(_API_EXPIRES_AT_KEY, _to_epoch_string(_parse_iso_datetime(expires_at)) if expires_at else None)
-    console.print(f"[green]✓[/green] {ENV_API_TOKEN} updated in [dim]{_DOTENV_PATH}[/dim]")
+    result = service_set_api_token(value.strip(), expires_at=expires_at)
+    console.print(f"[green]✓[/green] {ENV_API_TOKEN} updated in [dim]{result['env_path']}[/dim]")
     if expires_at:
-        console.print(f"[dim]Expiration metadata saved: {_format_timestamp(_parse_iso_datetime(expires_at))}[/dim]")
+        console.print(f"[dim]Expiration metadata saved: {result['timing']}[/dim]")
 
 
 # ─── session ──────────────────────────────────────────────────────────────────
@@ -554,19 +550,10 @@ def session_set(
     """
     if not value:
         value = typer.prompt(ENV_SESSION_TOKEN, hide_input=True)
-    _write_env(ENV_SESSION_TOKEN, value.strip())
-    now = _now_utc()
-    computed_expires_at = _parse_iso_datetime(expires_at)
-    if ttl_days is not None:
-        computed_expires_at = now + timedelta(days=ttl_days)
-    _write_env(_SESSION_OBTAINED_AT_KEY, _to_epoch_string(now))
-    _write_optional_env(
-        _SESSION_EXPIRES_AT_KEY,
-        _to_epoch_string(computed_expires_at) if computed_expires_at else None,
-    )
-    console.print(f"[green]✓[/green] {ENV_SESSION_TOKEN} updated in [dim]{_DOTENV_PATH}[/dim]")
-    if computed_expires_at:
-        console.print(f"[dim]Expiration metadata saved: {_format_timestamp(computed_expires_at)}[/dim]")
+    result = service_set_session_token(value.strip(), ttl_days=ttl_days, expires_at=expires_at)
+    console.print(f"[green]✓[/green] {ENV_SESSION_TOKEN} updated in [dim]{result['env_path']}[/dim]")
+    if result["timing"] != "no expiration metadata":
+        console.print(f"[dim]Expiration metadata saved: {result['timing']}[/dim]")
 
 
 @session_app.command("refresh")
@@ -596,11 +583,9 @@ def session_refresh(
     console.print("[green]✓[/green]")
 
     now = _now_utc()
-    expires_at = now + _APPROX_SESSION_TTL
-    _write_env(ENV_SESSION_TOKEN, token)
-    _write_env(_SESSION_OBTAINED_AT_KEY, _to_epoch_string(now))
-    _write_env(_SESSION_EXPIRES_AT_KEY, _to_epoch_string(expires_at))
-    console.print(f"[green]✓[/green] {ENV_SESSION_TOKEN} updated in [dim]{_DOTENV_PATH}[/dim]")
+    expires_at = now + APPROX_SESSION_TTL
+    result = service_set_session_token(token, ttl_days=30)
+    console.print(f"[green]✓[/green] {ENV_SESSION_TOKEN} updated in [dim]{result['env_path']}[/dim]")
     console.print(f"[dim]Token value: {_mask(token)}[/dim]")
     console.print(f"[dim]Approximate expiration: {_format_timestamp(expires_at)} ({_format_remaining(expires_at, approximate=True)} left)[/dim]")
     console.print()

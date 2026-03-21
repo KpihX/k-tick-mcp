@@ -9,15 +9,19 @@ This app exposes:
 from __future__ import annotations
 
 import os
+import threading
+import time
 
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from . import daemon
+from .admin_service import status_summary_text
 from .config import (
     APP_VERSION,
     ENV_API_TOKEN,
     ENV_SESSION_TOKEN,
+    ENV_TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS,
     ENV_TELEGRAM_TICK_HOMELAB_TOKEN,
     HTTP_FALLBACK_BASE_URL,
     HTTP_MCP_PATH,
@@ -26,6 +30,7 @@ from .config import (
     has_v2_auth_in_environment,
 )
 from .server import mcp
+from .telegram_admin import start_telegram_admin, telegram_admin_enabled
 
 
 def _base_payload() -> dict[str, object]:
@@ -67,10 +72,13 @@ async def admin_status(_request) -> JSONResponse:
             ],
         },
         "telegram_admin": {
-            "planned": True,
+            "planned": False,
             "token_env": ENV_TELEGRAM_TICK_HOMELAB_TOKEN,
+            "allowed_chat_ids_env": ENV_TELEGRAM_TICK_HOMELAB_ALLOWED_CHAT_IDS,
             "configured": bool(os.environ.get(ENV_TELEGRAM_TICK_HOMELAB_TOKEN)),
+            "enabled": telegram_admin_enabled(),
         },
+        "status_summary": status_summary_text(),
     }
     payload["routes"] = {
         "health": "/health",
@@ -80,6 +88,12 @@ async def admin_status(_request) -> JSONResponse:
     return JSONResponse(payload)
 
 
+def _restart_process() -> None:
+    time.sleep(1.0)
+    os._exit(0)
+
+
 app = mcp.streamable_http_app()
+app.add_event_handler("startup", lambda: start_telegram_admin(_restart_process))
 app.router.routes.insert(0, Route("/health", health))
 app.router.routes.insert(1, Route("/admin/status", admin_status))
