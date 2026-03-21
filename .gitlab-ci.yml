@@ -1,7 +1,6 @@
 stages:
   - validate
   - deploy
-  - sync
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -53,20 +52,3 @@ deploy_homelab:
     - docker compose up -d --build --remove-orphans
     - curl -fsS http://127.0.0.1:8091/health
     - docker image prune -f
-
-sync_github:
-  stage: sync
-  variables:
-    GITHUB_ORG: "kpihx-labs"
-    REPO_NAME: "tick-mcp"
-  only:
-    - main
-  script:
-    - echo "🔄 Syncing tick-mcp to GitHub..."
-    - |
-      curl -H "Authorization: token ${GITHUB_TOKEN}" \
-           -X POST \
-           -d "{\"name\":\"${REPO_NAME}\", \"private\":false}" \
-           https://api.github.com/orgs/${GITHUB_ORG}/repos || true
-    - git remote add github https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${REPO_NAME}.git || git remote set-url github https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${REPO_NAME}.git
-    - git push github $CI_COMMIT_SHA:refs/heads/main --force
