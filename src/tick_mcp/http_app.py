@@ -20,9 +20,11 @@ from .admin.service import admin_help_text, status_summary_text
 from .config import (
     APP_VERSION,
     ENV_API_TOKEN,
+    ENV_PASSWORD,
     ENV_SESSION_TOKEN,
     ENV_TELEGRAM_CHAT_IDS,
     ENV_TELEGRAM_TICK_HOMELAB_TOKEN,
+    ENV_USERNAME,
     HTTP_FALLBACK_BASE_URL,
     HTTP_MCP_PATH,
     HTTP_PORT,
@@ -55,13 +57,27 @@ def _base_payload() -> dict[str, object]:
     }
 
 
-async def health(_request) -> JSONResponse:
-    payload = _base_payload()
-    payload["auth"] = {
+def _auth_probe_payload() -> dict[str, object]:
+    api_present = bool(os.environ.get(ENV_API_TOKEN))
+    session_present = bool(os.environ.get(ENV_SESSION_TOKEN))
+    username_present = bool(os.environ.get(ENV_USERNAME))
+    password_present = bool(os.environ.get(ENV_PASSWORD))
+    return {
         "api_token_env": ENV_API_TOKEN,
+        "api_token_present": api_present,
         "session_token_env": ENV_SESSION_TOKEN,
+        "session_token_present": session_present,
+        "username_env": ENV_USERNAME,
+        "username_present": username_present,
+        "password_env": ENV_PASSWORD,
+        "password_present": password_present,
         "v2_available": has_v2_auth_in_environment(),
     }
+
+
+async def health(_request) -> JSONResponse:
+    payload = _base_payload()
+    payload["auth"] = _auth_probe_payload()
     return JSONResponse(payload)
 
 
@@ -83,6 +99,7 @@ async def admin_status(_request) -> JSONResponse:
             "enabled": telegram_admin_enabled(),
             "runtime": telegram_admin_runtime_status(),
         },
+        "auth_probe": _auth_probe_payload(),
         "status_summary": status_summary_text(),
     }
     payload["routes"] = {

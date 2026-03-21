@@ -204,6 +204,7 @@ HTTP defaults:
 - Primary URL: `https://tick.kpihx-labs.com`
 - Fallback URL: `https://tick.homelab`
 - Telegram admin: auto-started inside the HTTP service when both Telegram env vars are configured
+- Auth observability: `/health` and `/admin/status` expose presence booleans for API token, session token, username, and password without leaking values
 
 Operational intent:
 

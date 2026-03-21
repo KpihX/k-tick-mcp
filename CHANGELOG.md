@@ -18,6 +18,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Admin log surface aligned** — Telegram admin now logs into the shared admin log stream, so `/logs` can reflect both CLI/admin actions and Telegram command handling.
 - **Telegram help clarified** — `/start` is now listed explicitly alongside `/help` in the shared admin capability summary.
 - **Admin status clarified** — `/status` now reports whether tokens come from the persistent `/data/tick-admin.env` file or from the runtime environment fallback.
+- **HTTP auth probe clarified** — `/health` and `/admin/status` now expose explicit presence booleans for API token, session token, username, and password, so operators can distinguish “missing env” from “expired token”.
 
 ## [0.2.0] — 2026-03-20
 
