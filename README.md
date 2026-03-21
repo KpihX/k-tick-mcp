@@ -136,12 +136,12 @@ This provides two commands:
 | Command | Description |
 |---|---|
 | `tick-mcp` | Start the MCP server (stdio by default, HTTP via `serve-http`) |
-| `tick-admin` | CLI helper — session refresh, diagnostics |
+| `tick-admin` | CLI admin surface — status, help, logs, and credential actions |
 
 Quick operator capability summary:
 
 ```bash
-tick-admin guide
+tick-admin help
 ```
 
 ## Configuration
@@ -201,6 +201,8 @@ HTTP defaults:
 - MCP endpoint: `/mcp`
 - Health endpoint: `/health`
 - Admin status endpoint: `/admin/status`
+- Admin help endpoint: `/admin/help`
+- Admin log endpoint: `/admin/logs?lines=40`
 - Primary URL: `https://tick.kpihx-labs.com`
 - Fallback URL: `https://tick.homelab`
 - Telegram admin: auto-started inside the HTTP service when both Telegram env vars are configured
@@ -275,27 +277,47 @@ Telegram commands currently supported:
 
 ```text
 /start
+/help
 /status
 /health
 /urls
 /logs [lines]
-/api_token_set <token> [expires_at_iso]
+/api_set <token> [expires_at_iso]
+/api_unset
 /session_set <token> [ttl_days]
+/session_unset
 /session_refresh
+/user_set <email>
+/user_unset
+/pass_set <password>
+/pass_unset
 /restart
 ```
 
 Notes:
-- `/session_refresh` uses `TICKTICK_USERNAME` + `TICKTICK_PASSWORD` from the admin env file.
+- `/session_refresh` resolves credentials in this order: CLI/command override, persistent admin env, current process environment, then login-shell fallback. Interactive prompting only exists on the CLI surface.
 - If TickTick requires MFA code entry or an email-link approval, Telegram will refuse and tell you to use `tick-admin session refresh` over SSH.
 - `/restart` exits the live HTTP process; Docker restarts it automatically because the service runs with `restart: unless-stopped`.
-- `/status` reports whether credentials come from `/data/tick-admin.env` or from the runtime environment fallback.
+- `/status` reports every admin variable separately, with its own source (`persistent admin env`, `runtime environment fallback`, `login shell fallback`, or `missing`).
 
 The same capability summary is available through:
 
-- CLI: `tick-admin guide`
+- CLI: `tick-admin help`
 - HTTP: `GET /admin/help`
 - Telegram: `/help`
+
+### Shared admin help
+
+The admin interface is defined once in the shared admin service and then rendered
+for each surface:
+
+- CLI: `tick-admin help`
+- HTTP: `GET /admin/help`
+- Telegram: `/help`
+
+Use those live help entrypoints as the source of truth for the exact commands,
+arguments, and route names. The README should explain the model and operator
+intent, not duplicate the full generated help verbatim.
 
 ### Real-world admin validation checklist
 
@@ -308,9 +330,11 @@ docker exec tick-mcp tick-admin status
 # HTTP operator surface
 curl -fsS https://tick.kpihx-labs.com/health
 curl -fsS https://tick.kpihx-labs.com/admin/status
+curl -fsS https://tick.kpihx-labs.com/admin/help
+curl -fsS "https://tick.kpihx-labs.com/admin/logs?lines=20"
 
 # Telegram bridge
-# simulate or trigger /status, /health, /urls, /logs, and /restart
+# simulate or trigger /help, /status, /logs, /session_refresh, and /restart
 ```
 
 ### 5. GitLab deployment prerequisites
