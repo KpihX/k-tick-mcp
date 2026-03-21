@@ -20,4 +20,4 @@ USER tickmcp
 
 EXPOSE 8091
 
-CMD ["python", "-m", "tick_mcp.main", "serve-http"]
+CMD ["tick-mcp", "serve-http"]

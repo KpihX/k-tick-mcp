@@ -46,9 +46,22 @@ deploy_homelab:
     - echo "TICK_MCP_HTTP_PORT=8091" >> .env
     - echo "TICK_MCP_HTTP_MCP_PATH=/mcp" >> .env
     - echo "TICK_MCP_ADMIN_ENV_FILE=/data/tick-admin.env" >> .env
-    - echo "TICK_MCP_PUBLIC_BASE_URL=https://tick.kpihx-labs.com" >> .env
-    - echo "TICK_MCP_FALLBACK_BASE_URL=https://tick.homelab" >> .env
-    - docker compose config -q
-    - docker compose up -d --build --remove-orphans
-    - curl -fsS http://127.0.0.1:8091/health
-    - docker image prune -f
+      - echo "TICK_MCP_PUBLIC_BASE_URL=https://tick.kpihx-labs.com" >> .env
+      - echo "TICK_MCP_FALLBACK_BASE_URL=https://tick.homelab" >> .env
+      - docker compose config -q
+      - docker compose up -d --build --remove-orphans
+      - |
+        for attempt in $(seq 1 20); do
+          status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' tick-mcp 2>/dev/null || true)"
+          if [ "$status" = "healthy" ]; then
+            break
+          fi
+          if [ "$status" = "unhealthy" ]; then
+            docker logs --tail 200 tick-mcp
+            exit 1
+          fi
+          sleep 3
+        done
+      - docker inspect --format '{{.State.Health.Status}}' tick-mcp | grep -qx healthy
+      - docker exec tick-mcp curl -fsS http://127.0.0.1:8091/health
+      - docker image prune -f
