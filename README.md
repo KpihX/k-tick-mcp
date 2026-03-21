@@ -99,19 +99,16 @@ src/tick_mcp/
 
 ## Operator Takeover
 
-Use this sequence when another agent or operator takes over the project:
+Use this sequence when another operator or maintainer takes over the project:
 
 ```text
 1. Read README.md
    -> architecture, transports, deployment, admin model
 
-2. Read .agent/AGENT.md
-   -> project-specific continuity notes and live gotchas
-
-3. Read TODO.md
+2. Read TODO.md
    -> current follow-up work
 
-4. Read CHANGELOG.md
+3. Read CHANGELOG.md
    -> what changed recently and why
 ```
 
