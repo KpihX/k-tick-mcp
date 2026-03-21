@@ -295,10 +295,10 @@ Telegram commands currently supported:
 ```
 
 Notes:
-- `/session_refresh` resolves credentials in this order: CLI/command override, persistent admin env, current process environment, then login-shell fallback. Interactive prompting only exists on the CLI surface.
+- `/session_refresh` resolves credentials in this order: CLI/command override, admin `.env` file, current process environment, then login shell (`zsh -l`). Interactive prompting only exists on the CLI surface.
 - If TickTick requires MFA code entry or an email-link approval, Telegram will refuse and tell you to use `tick-admin session refresh` over SSH.
 - `/restart` exits the live HTTP process; Docker restarts it automatically because the service runs with `restart: unless-stopped`.
-- `/status` reports every admin variable separately, with its own source (`persistent admin env`, `runtime environment fallback`, `login shell fallback`, or `missing`).
+- `/status` reports every admin variable separately, with its own source (`admin .env file`, `process environment`, `login shell (zsh -l)`, or `missing`).
 
 The same capability summary is available through:
 

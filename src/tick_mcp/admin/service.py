@@ -205,11 +205,11 @@ def _resolve_admin_value(
     env_values = raw_env if raw_env is not None else _dotenv_values()
     dotenv_value = env_values.get(key)
     if dotenv_value:
-        return dotenv_value, "persistent admin env"
+        return dotenv_value, "admin .env file"
 
     runtime_value = os.environ.get(key)
     if runtime_value:
-        return runtime_value, "runtime environment fallback"
+        return runtime_value, "process environment"
 
     if shell_cache is not None and key in shell_cache:
         shell_value = shell_cache[key]
@@ -218,7 +218,7 @@ def _resolve_admin_value(
         if shell_cache is not None:
             shell_cache[key] = shell_value
     if shell_value:
-        return shell_value, "login shell fallback"
+        return shell_value, "login shell (zsh -l)"
 
     return None, "missing"
 
