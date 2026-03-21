@@ -5,6 +5,14 @@ All notable changes to **tick-mcp** will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Project continuity docs cleaned** — the local `.agent/AGENT.md` is now a short project handoff kernel instead of a duplicated global memory dump.
+- **Operator README improved** — takeover flow, transport map, and real-world admin validation steps are now documented explicitly.
+- **TODO realigned** — stale rollout items were replaced by follow-up work that still matters after the first successful homelab deployment.
+
 ## [0.2.0] — 2026-03-20
 
 ### Added

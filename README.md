@@ -63,6 +63,10 @@
 
 ```text
 src/tick_mcp/
+├── admin/
+│   ├── service.py       # shared admin/runtime status, token, session, and log logic
+│   ├── cli.py           # tick-admin Typer surface
+│   └── telegram.py      # Telegram command dispatcher over the shared admin service
 ├── mcp_api/
 │   ├── core.py          # shared FastMCP instance, catalog, helpers
 │   ├── utilities.py     # discovery + helper tools
@@ -89,7 +93,35 @@ src/tick_mcp/
 ├── models.py            # pydantic contracts
 ├── server.py            # stable public import surface for the MCP server
 ├── http_app.py          # health/admin HTTP wrapper around the MCP streamable transport
-└── main.py              # CLI entrypoint
+├── main.py              # CLI entrypoint
+└── .env.example         # single canonical env template for local and deploy usage
+```
+
+## Operator Takeover
+
+Use this sequence when another agent or operator takes over the project:
+
+```text
+1. Read README.md
+   -> architecture, transports, deployment, admin model
+
+2. Read .agent/AGENT.md
+   -> project-specific continuity notes and live gotchas
+
+3. Read TODO.md
+   -> current follow-up work
+
+4. Read CHANGELOG.md
+   -> what changed recently and why
+```
+
+Then run the minimum smoke checks:
+
+```bash
+uv run python -m py_compile $(find src -name '*.py' -print)
+uv run --group dev python -m pytest tests -q
+curl -fsS https://tick.kpihx-labs.com/health
+curl -fsS https://tick.kpihx-labs.com/admin/status
 ```
 
 ## Installation
@@ -180,6 +212,23 @@ local stdio
 -> immediate fallback if the remote service is unavailable
 ```
 
+### Transport map
+
+```text
+Local agent
+-> zsh -l -c "tick-mcp serve"
+-> stdio MCP
+
+Remote agent / automation
+-> https://tick.kpihx-labs.com/mcp
+-> same MCP tool surface over HTTP
+
+Operator
+-> tick-admin ...
+-> or Telegram admin commands
+-> both call the same shared admin service
+```
+
 ### 4. Docker / Homelab deployment
 
 Deployment artifacts are bundled in the repo:
@@ -235,6 +284,22 @@ Notes:
 - `/session_refresh` uses `TICKTICK_USERNAME` + `TICKTICK_PASSWORD` from the admin env file.
 - If TickTick requires MFA code entry or an email-link approval, Telegram will refuse and tell you to use `tick-admin session refresh` over SSH.
 - `/restart` exits the live HTTP process; Docker restarts it automatically because the service runs with `restart: unless-stopped`.
+
+### Real-world admin validation checklist
+
+After a deploy, validate these paths:
+
+```bash
+# inside the server / container host
+docker exec tick-mcp tick-admin status
+
+# HTTP operator surface
+curl -fsS https://tick.kpihx-labs.com/health
+curl -fsS https://tick.kpihx-labs.com/admin/status
+
+# Telegram bridge
+# simulate or trigger /status, /health, /urls, /logs, and /restart
+```
 
 ### 5. GitLab deployment prerequisites
 
