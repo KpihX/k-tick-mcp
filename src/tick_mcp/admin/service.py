@@ -35,6 +35,7 @@ from ..config import (
     V2_LOGIN_HEADERS,
     V2_SIGNON_URL,
     WEB_ORIGIN,
+    _shell_read_env,
 )
 
 
@@ -183,6 +184,17 @@ def _admin_env_view() -> dict[str, str]:
         value = os.environ.get(key)
         if value and not env.get(key):
             env[key] = value
+    for key in (
+        ENV_API_TOKEN,
+        ENV_SESSION_TOKEN,
+        ENV_USERNAME,
+        ENV_PASSWORD,
+    ):
+        if env.get(key):
+            continue
+        value = _shell_read_env(key)
+        if value:
+            env[key] = value
     return env
 
 
@@ -240,8 +252,16 @@ def _http_post(label: str, url: str, payload: dict[str, Any]) -> httpx.Response:
 
 
 def get_status_payload() -> StatusPayload:
+    raw_env = _dotenv_values()
     env = _admin_env_view()
-    env_source = "persistent admin env" if ADMIN_ENV_PATH.exists() else "runtime environment fallback"
+    if raw_env.get(ENV_API_TOKEN) or raw_env.get(ENV_SESSION_TOKEN):
+        env_source = "persistent admin env"
+    elif os.environ.get(ENV_API_TOKEN) or os.environ.get(ENV_SESSION_TOKEN):
+        env_source = "runtime environment fallback"
+    elif env.get(ENV_API_TOKEN) or env.get(ENV_SESSION_TOKEN):
+        env_source = "login shell fallback"
+    else:
+        env_source = "persistent admin env" if ADMIN_ENV_PATH.exists() else "runtime environment fallback"
     api_expires_at = _parse_epoch(env.get(API_EXPIRES_AT_KEY))
     session_obtained_at = _parse_epoch(env.get(SESSION_OBTAINED_AT_KEY))
     session_expires_at = _parse_epoch(env.get(SESSION_EXPIRES_AT_KEY))

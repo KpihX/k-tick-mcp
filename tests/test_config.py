@@ -60,7 +60,6 @@ class TestLoadConfig:
         assert result == {}
         load_config.cache_clear()
 
-
 @pytest.mark.unit
 class TestSecretsUnavailableError:
     def test_structure(self):
@@ -108,6 +107,20 @@ class TestResolveEnvTier1:
     def test_skip_tier1_ignores_env(self, fake_env, no_bwenv):
         val = _resolve_env(ENV_API_TOKEN, skip_tier1=True)
         assert val is None
+
+    def test_blank_dotenv_value_does_not_erase_runtime_secret(self, tmp_path, monkeypatch):
+        dotenv = tmp_path / ".env"
+        dotenv.write_text(
+            "TICKTICK_API_TOKEN=\n"
+            "TICKTICK_SESSION_TOKEN=\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("TICKTICK_API_TOKEN", "runtime_api")
+        monkeypatch.setenv("TICKTICK_SESSION_TOKEN", "runtime_session")
+        config_mod._load_nonempty_dotenv(dotenv)
+
+        assert os.environ.get("TICKTICK_API_TOKEN") == "runtime_api"
+        assert os.environ.get("TICKTICK_SESSION_TOKEN") == "runtime_session"
 
 
 @pytest.mark.unit

@@ -10,6 +10,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - **Operator README improved** — takeover flow, transport map, and real-world admin validation steps are now documented explicitly.
+- **Admin auth probing aligned** — `tick-admin status` and the shared admin layer now probe the login shell for missing TickTick auth values, matching the runtime resolution path used by the MCP itself.
+- **CLI status source clarified** — `tick-admin status` now reports the actual auth source instead of implying that values only come from the local `.env` file.
+- **Blank `.env` auth no longer poisons fallback** — empty TickTick auth values are now cleared before the login-shell probe, so editable/local stdio installs can still resolve real shell-exported secrets.
 - **TODO realigned** — stale rollout items were replaced by follow-up work that still matters after the first successful homelab deployment.
 - **Admin help unified** — one shared capability summary now feeds CLI (`tick-admin guide`), HTTP (`/admin/help`), and Telegram (`/help`).
 - **Telegram poller diagnostics hardened** — `/admin/status` now exposes live Telegram admin runtime state, and the poll loop records the last poll, last update, last command, and last error.

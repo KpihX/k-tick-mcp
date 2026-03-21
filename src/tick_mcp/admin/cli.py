@@ -476,7 +476,7 @@ def status():
     """Show current credential status (.env on disk + runtime fallback)."""
 
     tbl = Table(
-        title=f".env status  [dim]({_DOTENV_PATH})[/dim]",
+        title=f"Tick auth status  [dim]({_DOTENV_PATH})[/dim]",
         box=box.ROUNDED,
         show_lines=True,
         highlight=True,
@@ -505,6 +505,7 @@ def status():
     )
 
     console.print()
+    console.print(f"[dim]Source:[/dim] {service_status.env_source}")
     console.print(tbl)
     console.print()
 

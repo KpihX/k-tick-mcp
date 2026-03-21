@@ -27,6 +27,7 @@ mcp = FastMCP(
     host=HTTP_HOST,
     port=HTTP_PORT,
     streamable_http_path=HTTP_MCP_PATH,
+    stateless_http=True,
 )
 
 StrListArg: TypeAlias = Optional[list[str] | str]

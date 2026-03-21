@@ -9,7 +9,7 @@ import yaml
 from pathlib import Path
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version as pkg_version
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -145,10 +145,24 @@ _DOTENV_PATH = Path(
     os.environ.get(ENV_ADMIN_ENV_FILE, str(_DEFAULT_DOTENV_PATH))
 ).expanduser()
 
+def _load_nonempty_dotenv(path: Path) -> None:
+    """
+    Load .env values into os.environ, but ignore blank placeholders.
+
+    This preserves the existing deployment behavior for real values while
+    preventing empty local placeholders from clobbering inherited secrets.
+    """
+    if not path.exists():
+        return
+    for key, value in dotenv_values(path).items():
+        if value not in (None, ""):
+            os.environ[key] = value
+
+
 # ─── .env loading ─────────────────────────────────────────────────────────────
-# override=True: values from .env overwrite any already-set os.environ entries.
-# If .env doesn't exist this is a no-op, falling back to plain os.environ.
-load_dotenv(_DOTENV_PATH, override=True)
+# Non-empty values from .env override current os.environ values.
+# Blank placeholders are ignored so they cannot erase inherited secrets.
+_load_nonempty_dotenv(_DOTENV_PATH)
 
 HTTP_HOST: str = _read_env_override(ENV_HTTP_HOST, str(_server_http.get("host", "127.0.0.1")))
 HTTP_PORT: int = int(_read_env_override(ENV_HTTP_PORT, str(_server_http.get("port", 8091))))
