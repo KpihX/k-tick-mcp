@@ -32,6 +32,7 @@ from .service import (
     SESSION_OBTAINED_AT_KEY,
     admin_help_text,
     get_status_payload,
+    resolve_refresh_credentials,
     set_api_token as service_set_api_token,
     set_session_token as service_set_session_token,
 )
@@ -39,7 +40,7 @@ from ..config import (
     ADMIN_ENV_PATH,
     V2_SIGNON_URL, V2_MFA_VERIFY_URL, V2_LOGIN_HEADERS,
     SIGNON_PARAMS, API_TIMEOUT, WEB_ORIGIN,
-    ENV_API_TOKEN, ENV_SESSION_TOKEN,
+    ENV_API_TOKEN, ENV_PASSWORD, ENV_SESSION_TOKEN, ENV_USERNAME,
 )
 
 # ─── Paths ────────────────────────────────────────────────────────────────────────────
@@ -475,8 +476,9 @@ def _handle_code_flow(username: str, password: str, auth_id: str, signon_data: d
 def status():
     """Show current credential status (.env on disk + runtime fallback)."""
 
+    service_status = get_status_payload()
     tbl = Table(
-        title=f"Tick auth status  [dim]({_DOTENV_PATH})[/dim]",
+        title="Tick auth status",
         box=box.ROUNDED,
         show_lines=True,
         highlight=True,
@@ -485,27 +487,54 @@ def status():
     tbl.add_column("Status")
     tbl.add_column("Value (masked)")
     tbl.add_column("Timing")
+    tbl.add_column("Source")
 
-    def _row(key: str, present: bool, masked: str, *, timing: str = "[dim]n/a[/dim]"):
+    def _row(
+        key: str,
+        present: bool,
+        masked: str,
+        source: str,
+        *,
+        timing: str = "[dim]n/a[/dim]",
+    ):
         status_str = "[green]✓ set[/green]" if present else "[red]✗ missing[/red]"
-        tbl.add_row(key, status_str, masked, timing if present else "[dim]n/a[/dim]")
+        tbl.add_row(
+            key,
+            status_str,
+            masked,
+            timing if present else "[dim]n/a[/dim]",
+            source,
+        )
 
-    service_status = get_status_payload()
     _row(
         ENV_API_TOKEN,
         service_status.api_token_present,
         service_status.api_token_masked,
+        service_status.api_source,
         timing=service_status.api_timing,
     )
     _row(
         ENV_SESSION_TOKEN,
         service_status.session_token_present,
         service_status.session_token_masked,
+        service_status.session_source,
         timing=service_status.session_timing,
+    )
+    _row(
+        ENV_USERNAME,
+        service_status.username_present,
+        service_status.username_masked,
+        service_status.username_source,
+    )
+    _row(
+        ENV_PASSWORD,
+        service_status.password_present,
+        service_status.password_masked,
+        service_status.password_source,
     )
 
     console.print()
-    console.print(f"[dim]Source:[/dim] {service_status.env_source}")
+    console.print(f"[dim]Local .env path:[/dim] {service_status.env_path}")
     console.print(tbl)
     console.print()
 
@@ -573,27 +602,44 @@ def session_set(
 @session_app.command("refresh")
 def session_refresh(
     username: Annotated[Optional[str], typer.Option("--username", "-u", help="TickTick account email.")] = None,
+    password: Annotated[Optional[str], typer.Option("--password", "-p", help="TickTick account password.")] = None,
 ):
     """
     Fetch a fresh V2 session token by logging in with username + password.
 
-    Credentials are [bold]never stored[/bold] — only the resulting token is
-    written to .env. On next expiration (~30 days), run this command again.
+    Resolution order for credentials:
+      CLI overrides -> persistent admin env -> current process env -> login shell.
 
-    The password is always prompted interactively (not echoed to the terminal).
+    If one value is still missing, the command prompts only for the missing part.
+    Credentials are never stored automatically; only the resulting session token
+    is written when the refresh succeeds.
     """
     console.print()
     console.print("[bold]V2 Session Token — Auto-refresh[/bold]")
     console.print("[dim]Credentials are used once and then discarded. Only the token is saved.[/dim]")
     console.print()
 
-    if not username:
-        username = typer.prompt("TickTick username (email)")
+    credentials = resolve_refresh_credentials(
+        username_override=username,
+        password_override=password,
+    )
 
-    password = typer.prompt("TickTick password", hide_input=True)
+    resolved_username = credentials.username
+    resolved_password = credentials.password
+
+    if not resolved_username:
+        resolved_username = typer.prompt("TickTick username (email)")
+        credentials.username_source = "interactive prompt"
+
+    if not resolved_password:
+        resolved_password = typer.prompt("TickTick password", hide_input=True)
+        credentials.password_source = "interactive prompt"
+
+    console.print(f"[dim]Username source: {credentials.username_source}[/dim]")
+    console.print(f"[dim]Password source: {credentials.password_source}[/dim]")
 
     console.print("[dim]Logging in…[/dim]", end=" ")
-    token = _v2_login(username.strip(), password)
+    token = _v2_login(resolved_username.strip(), resolved_password)
     console.print("[green]✓[/green]")
 
     now = _now_utc()

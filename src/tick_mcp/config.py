@@ -257,37 +257,6 @@ def _shell_read_env(key: str) -> str | None:
         return None
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Dotenv write-back (session token only — not for sensitive API token)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _write_to_dotenv(key: str, value: str) -> None:
-    """
-    Insert or update *key=value* in the package .env file.
-
-    Uses atomic write (tmp → rename) to avoid partial reads.
-    """
-    _DOTENV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    lines: list[str] = []
-    found = False
-
-    if _DOTENV_PATH.is_file():
-        for line in _DOTENV_PATH.read_text(encoding="utf-8").splitlines():
-            if line.startswith(f"{key}=") or line.startswith(f"export {key}="):
-                lines.append(f"{key}={value}")
-                found = True
-            else:
-                lines.append(line)
-
-    if not found:
-        lines.append(f"{key}={value}")
-
-    tmp = _DOTENV_PATH.with_suffix(".env.tmp")
-    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    tmp.rename(_DOTENV_PATH)
-    _log.debug("Wrote %s to .env (write-back from vault).", key)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
 #  Core resolver: 2-tier fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -295,7 +264,6 @@ def _resolve_env(
     key: str,
     *,
     required: bool = False,
-    cache_to_dotenv: bool = False,
     skip_tier1: bool = False,
 ) -> str | None:
     """
@@ -307,9 +275,6 @@ def _resolve_env(
         Environment variable name (e.g. ``TICKTICK_API_TOKEN``).
     required
         If True and resolution fails, raise SecretsUnavailableError.
-    cache_to_dotenv
-        If True, write Tier-2 values back to .env for future cold starts.
-        Only used for non-sensitive tokens (session token).
     skip_tier1
         If True, skip os.environ (Tier 1) — used when we know the current
         value is stale (e.g. after a 401) and want a fresh vault read.
@@ -330,8 +295,6 @@ def _resolve_env(
     if val:
         _log.info("%s resolved from Tier 2 (login shell).", key)
         os.environ[key] = val
-        if cache_to_dotenv:
-            _write_to_dotenv(key, val)
         return val
 
     # ── Not found anywhere ──
@@ -368,11 +331,10 @@ def get_session_token() -> str | None:
     """
     Reads the V2 session cookie token.
 
-    Resolution with write-back: if found via login shell but absent from .env,
-    the value is cached to .env for future cold starts (non-sensitive).
+    Resolution: os.environ → login shell fallback.
     Returns None if not set; client.py will fall back to auto-login.
     """
-    return _resolve_env(ENV_SESSION_TOKEN, cache_to_dotenv=True)
+    return _resolve_env(ENV_SESSION_TOKEN)
 
 
 def refresh_session_from_vault() -> str | None:
@@ -381,13 +343,12 @@ def refresh_session_from_vault() -> str | None:
 
     Called by client.py after a 401: we assume the current value is stale
     and go straight to a fresh login shell read.
-    If found AND different from the current value → updates .env + os.environ.
+    If found AND different from the current value → updates os.environ only.
     Returns None if no fresh value is available.
     """
     current = os.environ.get(ENV_SESSION_TOKEN)
     fresh = _resolve_env(
         ENV_SESSION_TOKEN,
-        cache_to_dotenv=True,
         skip_tier1=True,
     )
     if fresh and fresh != current:

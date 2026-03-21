@@ -36,7 +36,8 @@ def test_status_payload_reads_admin_env(monkeypatch, tmp_path: Path) -> None:
     assert payload.api_token_present is True
     assert payload.session_token_present is True
     assert payload.env_path == str(env_path)
-    assert payload.env_source == "persistent admin env"
+    assert payload.api_source == "persistent admin env"
+    assert payload.session_source == "persistent admin env"
     assert payload.api_token_masked.startswith("api-ab")
     assert payload.session_token_masked.startswith("sessio")
 
@@ -51,7 +52,8 @@ def test_status_payload_reports_runtime_fallback(monkeypatch, tmp_path: Path) ->
 
     assert payload.api_token_present is True
     assert payload.session_token_present is True
-    assert payload.env_source == "runtime environment fallback"
+    assert payload.api_source == "runtime environment fallback"
+    assert payload.session_source == "runtime environment fallback"
 
 
 def test_status_payload_reports_login_shell_fallback(monkeypatch, tmp_path: Path) -> None:
@@ -72,4 +74,20 @@ def test_status_payload_reports_login_shell_fallback(monkeypatch, tmp_path: Path
 
     assert payload.api_token_present is True
     assert payload.session_token_present is True
-    assert payload.env_source == "login shell fallback"
+    assert payload.api_source == "login shell fallback"
+    assert payload.session_source == "login shell fallback"
+
+
+def test_status_payload_reports_credential_sources_individually(monkeypatch, tmp_path: Path) -> None:
+    env_path = tmp_path / "tick-admin.env"
+    env_path.write_text("TICKTICK_USERNAME=env-user@example.com\n", encoding="utf-8")
+    monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", env_path)
+    monkeypatch.delenv("TICKTICK_USERNAME", raising=False)
+    monkeypatch.setenv("TICKTICK_PASSWORD", "runtime-password")
+
+    payload = admin_service.get_status_payload()
+
+    assert payload.username_present is True
+    assert payload.password_present is True
+    assert payload.username_source == "persistent admin env"
+    assert payload.password_source == "runtime environment fallback"

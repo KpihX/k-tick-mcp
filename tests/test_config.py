@@ -12,7 +12,6 @@ import tick_mcp.config as config_mod
 from tick_mcp.config import (
     load_config,
     _shell_read_env,
-    _write_to_dotenv,
     _resolve_env,
     get_api_token,
     get_session_token,
@@ -137,20 +136,16 @@ class TestResolveEnvTier2:
         # Should also be injected into os.environ
         assert os.environ.get(ENV_API_TOKEN) == "vault_token_abc123"
 
-    def test_cache_to_dotenv(self, clean_env, mock_bwenv, monkeypatch, backup_dotenv):
-        """cache_to_dotenv=True should write the resolved value to .env."""
+    def test_session_token_from_login_shell_does_not_write_to_dotenv(self, clean_env, mock_bwenv, monkeypatch, backup_dotenv):
+        """Session token discovery must not repopulate the local .env automatically."""
         monkeypatch.setattr(
             config_mod, "_shell_read_env",
             lambda key: "session_from_vault",
         )
-        written = {}
-        monkeypatch.setattr(
-            config_mod, "_write_to_dotenv",
-            lambda k, v: written.update({k: v}),
-        )
-        val = _resolve_env(ENV_SESSION_TOKEN, cache_to_dotenv=True)
+        backup_dotenv.write_text("TICKTICK_SESSION_TOKEN=\n", encoding="utf-8")
+        val = _resolve_env(ENV_SESSION_TOKEN)
         assert val == "session_from_vault"
-        assert written.get(ENV_SESSION_TOKEN) == "session_from_vault"
+        assert backup_dotenv.read_text(encoding="utf-8") == "TICKTICK_SESSION_TOKEN=\n"
 
 
 @pytest.mark.unit
@@ -198,9 +193,6 @@ class TestRefreshSessionFromVault:
             config_mod, "_shell_read_env",
             lambda key: "brand_new_token",
         )
-        monkeypatch.setattr(
-            config_mod, "_write_to_dotenv", lambda k, v: None,
-        )
         result = refresh_session_from_vault()
         assert result == "brand_new_token"
 
@@ -216,38 +208,6 @@ class TestRefreshSessionFromVault:
     def test_returns_none_when_unavailable(self, fake_env, no_bwenv):
         result = refresh_session_from_vault()
         assert result is None
-
-
-@pytest.mark.unit
-class TestWriteToDotenv:
-    """_write_to_dotenv(): file write/update logic."""
-
-    def test_creates_file_if_missing(self, tmp_path, monkeypatch):
-        dotenv = tmp_path / "pkg" / ".env"
-        monkeypatch.setattr(config_mod, "_DOTENV_PATH", dotenv)
-        _write_to_dotenv("MY_KEY", "my_value")
-        assert dotenv.exists()
-        content = dotenv.read_text()
-        assert "MY_KEY=my_value" in content
-
-    def test_updates_existing_key(self, tmp_path, monkeypatch):
-        dotenv = tmp_path / ".env"
-        dotenv.write_text("MY_KEY=old\nOTHER=keep\n")
-        monkeypatch.setattr(config_mod, "_DOTENV_PATH", dotenv)
-        _write_to_dotenv("MY_KEY", "new_value")
-        content = dotenv.read_text()
-        assert "MY_KEY=new_value" in content
-        assert "OTHER=keep" in content
-        assert "MY_KEY=old" not in content
-
-    def test_appends_new_key(self, tmp_path, monkeypatch):
-        dotenv = tmp_path / ".env"
-        dotenv.write_text("EXISTING=yes\n")
-        monkeypatch.setattr(config_mod, "_DOTENV_PATH", dotenv)
-        _write_to_dotenv("NEW_KEY", "hello")
-        content = dotenv.read_text()
-        assert "EXISTING=yes" in content
-        assert "NEW_KEY=hello" in content
 
 
 @pytest.mark.unit

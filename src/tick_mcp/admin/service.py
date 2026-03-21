@@ -80,12 +80,27 @@ _log = _setup_logger()
 class StatusPayload:
     api_token_present: bool
     session_token_present: bool
+    username_present: bool
+    password_present: bool
     api_token_masked: str
     session_token_masked: str
+    username_masked: str
+    password_masked: str
     api_timing: str
     session_timing: str
     env_path: str
-    env_source: str
+    api_source: str
+    session_source: str
+    username_source: str
+    password_source: str
+
+
+@dataclass(slots=True)
+class RefreshCredentials:
+    username: str | None
+    password: str | None
+    username_source: str
+    password_source: str
 
 
 def _mask(value: str | None, *, show: int = 6) -> str:
@@ -168,6 +183,38 @@ def _timing_summary(
 
 def _dotenv_values() -> dict[str, str]:
     return dotenv_values(ADMIN_ENV_PATH) if ADMIN_ENV_PATH.exists() else {}
+
+
+def _resolve_admin_value(
+    key: str,
+    *,
+    raw_env: dict[str, str] | None = None,
+    shell_cache: dict[str, str | None] | None = None,
+    override_value: str | None = None,
+    override_source: str = "cli override",
+) -> tuple[str | None, str]:
+    if override_value:
+        return override_value, override_source
+
+    env_values = raw_env if raw_env is not None else _dotenv_values()
+    dotenv_value = env_values.get(key)
+    if dotenv_value:
+        return dotenv_value, "persistent admin env"
+
+    runtime_value = os.environ.get(key)
+    if runtime_value:
+        return runtime_value, "runtime environment fallback"
+
+    if shell_cache is not None and key in shell_cache:
+        shell_value = shell_cache[key]
+    else:
+        shell_value = _shell_read_env(key)
+        if shell_cache is not None:
+            shell_cache[key] = shell_value
+    if shell_value:
+        return shell_value, "login shell fallback"
+
+    return None, "missing"
 
 
 def _admin_env_view() -> dict[str, str]:
@@ -253,25 +300,24 @@ def _http_post(label: str, url: str, payload: dict[str, Any]) -> httpx.Response:
 
 def get_status_payload() -> StatusPayload:
     raw_env = _dotenv_values()
-    env = _admin_env_view()
-    if raw_env.get(ENV_API_TOKEN) or raw_env.get(ENV_SESSION_TOKEN):
-        env_source = "persistent admin env"
-    elif os.environ.get(ENV_API_TOKEN) or os.environ.get(ENV_SESSION_TOKEN):
-        env_source = "runtime environment fallback"
-    elif env.get(ENV_API_TOKEN) or env.get(ENV_SESSION_TOKEN):
-        env_source = "login shell fallback"
-    else:
-        env_source = "persistent admin env" if ADMIN_ENV_PATH.exists() else "runtime environment fallback"
-    api_expires_at = _parse_epoch(env.get(API_EXPIRES_AT_KEY))
-    session_obtained_at = _parse_epoch(env.get(SESSION_OBTAINED_AT_KEY))
-    session_expires_at = _parse_epoch(env.get(SESSION_EXPIRES_AT_KEY))
-    api_value = env.get(ENV_API_TOKEN)
-    session_value = env.get(ENV_SESSION_TOKEN)
+    shell_cache: dict[str, str | None] = {}
+    api_value, api_source = _resolve_admin_value(ENV_API_TOKEN, raw_env=raw_env, shell_cache=shell_cache)
+    session_value, session_source = _resolve_admin_value(ENV_SESSION_TOKEN, raw_env=raw_env, shell_cache=shell_cache)
+    username_value, username_source = _resolve_admin_value(ENV_USERNAME, raw_env=raw_env, shell_cache=shell_cache)
+    password_value, password_source = _resolve_admin_value(ENV_PASSWORD, raw_env=raw_env, shell_cache=shell_cache)
+    merged_env = _admin_env_view()
+    api_expires_at = _parse_epoch(merged_env.get(API_EXPIRES_AT_KEY))
+    session_obtained_at = _parse_epoch(merged_env.get(SESSION_OBTAINED_AT_KEY))
+    session_expires_at = _parse_epoch(merged_env.get(SESSION_EXPIRES_AT_KEY))
     return StatusPayload(
         api_token_present=bool(api_value),
         session_token_present=bool(session_value),
+        username_present=bool(username_value),
+        password_present=bool(password_value),
         api_token_masked=_mask(api_value),
         session_token_masked=_mask(session_value),
+        username_masked=_mask(username_value),
+        password_masked=_mask(password_value),
         api_timing=_timing_summary(expires_at=api_expires_at),
         session_timing=_timing_summary(
             expires_at=session_expires_at,
@@ -279,7 +325,10 @@ def get_status_payload() -> StatusPayload:
             approximate=True,
         ),
         env_path=str(ADMIN_ENV_PATH),
-        env_source=env_source,
+        api_source=api_source,
+        session_source=session_source,
+        username_source=username_source,
+        password_source=password_source,
     )
 
 
@@ -389,7 +438,7 @@ def admin_help_text() -> str:
             "  - tick-admin guide",
             "  - tick-admin token set <token> [--expires-at ISO]",
             "  - tick-admin session set <token> [--ttl-days N|--expires-at ISO]",
-            "  - tick-admin session refresh [--username <email>]",
+            "  - tick-admin session refresh [--username <email>] [--password <value>]",
             "- HTTP:",
             "  - GET /health",
             "  - GET /admin/status",
@@ -415,15 +464,51 @@ def status_summary_text() -> str:
         [
             "tick-admin status",
             f"- env file: {status.env_path}",
-            f"- source: {status.env_source}",
             f"- {ENV_API_TOKEN}: {'set' if status.api_token_present else 'missing'} ({status.api_token_masked})",
+            f"  source: {status.api_source}",
             f"  timing: {status.api_timing}",
             f"- {ENV_SESSION_TOKEN}: {'set' if status.session_token_present else 'missing'} ({status.session_token_masked})",
+            f"  source: {status.session_source}",
             f"  timing: {status.session_timing}",
+            f"- {ENV_USERNAME}: {'set' if status.username_present else 'missing'} ({status.username_masked})",
+            f"  source: {status.username_source}",
+            f"- {ENV_PASSWORD}: {'set' if status.password_present else 'missing'} ({status.password_masked})",
+            f"  source: {status.password_source}",
         ]
     )
 
 
+def resolve_refresh_credentials(
+    *,
+    username_override: str | None = None,
+    password_override: str | None = None,
+    username_override_source: str = "cli override",
+    password_override_source: str = "cli override",
+) -> RefreshCredentials:
+    raw_env = _dotenv_values()
+    shell_cache: dict[str, str | None] = {}
+    username, username_source = _resolve_admin_value(
+        ENV_USERNAME,
+        raw_env=raw_env,
+        shell_cache=shell_cache,
+        override_value=username_override.strip() if username_override else None,
+        override_source=username_override_source,
+    )
+    password, password_source = _resolve_admin_value(
+        ENV_PASSWORD,
+        raw_env=raw_env,
+        shell_cache=shell_cache,
+        override_value=password_override if password_override else None,
+        override_source=password_override_source,
+    )
+    return RefreshCredentials(
+        username=username,
+        password=password,
+        username_source=username_source,
+        password_source=password_source,
+    )
+
+
 def configured_refresh_credentials() -> tuple[str | None, str | None]:
-    env = _admin_env_view()
-    return env.get(ENV_USERNAME), env.get(ENV_PASSWORD)
+    creds = resolve_refresh_credentials()
+    return creds.username, creds.password

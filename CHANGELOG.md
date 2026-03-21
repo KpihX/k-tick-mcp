@@ -12,6 +12,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Operator README improved** — takeover flow, transport map, and real-world admin validation steps are now documented explicitly.
 - **Admin auth probing aligned** — `tick-admin status` and the shared admin layer now probe the login shell for missing TickTick auth values, matching the runtime resolution path used by the MCP itself.
 - **CLI status source clarified** — `tick-admin status` now reports the actual auth source instead of implying that values only come from the local `.env` file.
+- **Per-variable auth sourcing added** — `tick-admin status` now shows `TICKTICK_API_TOKEN`, `TICKTICK_SESSION_TOKEN`, `TICKTICK_USERNAME`, and `TICKTICK_PASSWORD` with their own real source (`.env`, runtime env, or login shell) instead of one misleading global source label.
+- **Session refresh resolution unified** — `tick-admin session refresh` now resolves credentials in a strict order: CLI overrides, persistent admin env, current process env, then login shell, and only prompts for whichever value is still missing.
+- **Automatic session-token write-back removed** — runtime/login-shell discovery no longer repopulates the local `.env`; only explicit admin write actions persist a new token.
 - **Blank `.env` auth no longer poisons fallback** — empty TickTick auth values are now cleared before the login-shell probe, so editable/local stdio installs can still resolve real shell-exported secrets.
 - **TODO realigned** — stale rollout items were replaced by follow-up work that still matters after the first successful homelab deployment.
 - **Admin help unified** — one shared capability summary now feeds CLI (`tick-admin guide`), HTTP (`/admin/help`), and Telegram (`/help`).
