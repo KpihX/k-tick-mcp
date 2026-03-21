@@ -35,6 +35,8 @@ deploy_homelab:
   stage: deploy
   tags:
     - homelab
+  variables:
+    GIT_CLEAN_FLAGS: none
   only:
     - main
   needs:
