@@ -8,6 +8,8 @@ variables:
 validate_project:
   stage: validate
   image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+  variables:
+    GIT_CLEAN_FLAGS: none
   script:
     - |
       if command -v uv >/dev/null 2>&1; then
