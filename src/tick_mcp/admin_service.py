@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -179,7 +180,7 @@ def _admin_env_view() -> dict[str, str]:
         SESSION_EXPIRES_AT_KEY,
     ):
         value = os.environ.get(key)
-        if value:
+        if value and not env.get(key):
             env[key] = value
     return env
 
