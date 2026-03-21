@@ -36,8 +36,8 @@ def test_status_payload_reads_admin_env(monkeypatch, tmp_path: Path) -> None:
     assert payload.api_token_present is True
     assert payload.session_token_present is True
     assert payload.env_path == str(env_path)
-    assert payload.api_source == "persistent admin env"
-    assert payload.session_source == "persistent admin env"
+    assert payload.api_source == "admin .env file"
+    assert payload.session_source == "admin .env file"
     assert payload.api_token_masked.startswith("api-ab")
     assert payload.session_token_masked.startswith("sessio")
 
@@ -52,8 +52,8 @@ def test_status_payload_reports_runtime_fallback(monkeypatch, tmp_path: Path) ->
 
     assert payload.api_token_present is True
     assert payload.session_token_present is True
-    assert payload.api_source == "runtime environment fallback"
-    assert payload.session_source == "runtime environment fallback"
+    assert payload.api_source == "process environment"
+    assert payload.session_source == "process environment"
 
 
 def test_status_payload_reports_login_shell_fallback(monkeypatch, tmp_path: Path) -> None:
@@ -74,8 +74,8 @@ def test_status_payload_reports_login_shell_fallback(monkeypatch, tmp_path: Path
 
     assert payload.api_token_present is True
     assert payload.session_token_present is True
-    assert payload.api_source == "login shell fallback"
-    assert payload.session_source == "login shell fallback"
+    assert payload.api_source == "login shell (zsh -l)"
+    assert payload.session_source == "login shell (zsh -l)"
 
 
 def test_status_payload_reports_credential_sources_individually(monkeypatch, tmp_path: Path) -> None:
@@ -89,8 +89,8 @@ def test_status_payload_reports_credential_sources_individually(monkeypatch, tmp
 
     assert payload.username_present is True
     assert payload.password_present is True
-    assert payload.username_source == "persistent admin env"
-    assert payload.password_source == "runtime environment fallback"
+    assert payload.username_source == "admin .env file"
+    assert payload.password_source == "process environment"
     assert payload.password_masked == "hidden"
 
 
