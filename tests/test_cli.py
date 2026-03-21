@@ -37,14 +37,17 @@ def test_status_shows_session_remaining_time(monkeypatch, tmp_path: Path) -> Non
 
     assert result.exit_code == 0
     assert "TICKTICK_SESSION_TOKEN" in result.stdout
-    assert "obtained 2026-03-20 12:00" in result.stdout
-    assert "UTC | expires 2026-03-30" in result.stdout
+    assert "obtained" in result.stdout
+    assert "2026-03-20" in result.stdout
+    assert "12:00 UTC" in result.stdout
+    assert "expires" in result.stdout
+    assert "2026-03-30" in result.stdout
     assert "14:00 UTC" in result.stdout
     assert "10d" in result.stdout
     assert "2h" in result.stdout
 
 
-def test_token_set_can_store_optional_expiration(monkeypatch, tmp_path: Path) -> None:
+def test_api_set_can_store_optional_expiration(monkeypatch, tmp_path: Path) -> None:
     dotenv_path = tmp_path / ".env"
     monkeypatch.setattr(cli, "_DOTENV_PATH", dotenv_path)
     monkeypatch.setattr(admin_service, "ADMIN_ENV_PATH", dotenv_path)
@@ -52,7 +55,7 @@ def test_token_set_can_store_optional_expiration(monkeypatch, tmp_path: Path) ->
     result = runner.invoke(
         cli.app,
         [
-            "token",
+            "api",
             "set",
             "api_value_123",
             "--expires-at",

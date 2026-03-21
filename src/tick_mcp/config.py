@@ -306,7 +306,7 @@ def _resolve_env(
                 f"The variable '{key}' is not available in the current process environment.",
                 "Your login shell does not expose the variable either.",
                 "Open a fresh login shell and confirm the variable is exported there.",
-                f"Manual fix: tick-admin token set <value>  or add {key}=<value> to .env",
+                f"Manual fix: tick-admin api set <value>  or add {key}=<value> to .env",
             ],
         )
     return None

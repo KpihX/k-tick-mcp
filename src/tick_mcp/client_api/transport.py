@@ -191,7 +191,7 @@ def _handle(r: httpx.Response) -> dict | list:
         raise TickTickAPIError(
             401,
             f"V1 API token expired or invalid ({ENV_API_TOKEN}).\n"
-            "Fix: run  tick-admin token set <new_token>  in your terminal,\n"
+            "Fix: run  tick-admin api set <new_token>  in your terminal,\n"
             "  or copy the token from TickTick → Settings → Integrations → API\n"
             "  and set it in src/tick_mcp/.env."
         )
