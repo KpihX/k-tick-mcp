@@ -21,3 +21,4 @@ logs/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+.agents/
